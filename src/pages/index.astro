@@ -19,7 +19,7 @@ const recent = sorted.slice(0, 5).map((p) => ({
 <BaseLayout title="Khalil's Notes">
   <div class="home container-prose">
     <section class="home-intro">
-      <p>这里是 <strong>Khalil's Notes</strong>。</p>
+      <p class="home-intro__hero">这里是 <strong>Khalil's Notes</strong>。</p>
       <p>
         在编码的间隙，我将脑海中路过的思绪一一截下，揉成文字。它们有时是一截优化的灵感，有时是一次弯路的复盘，有时仅仅是悟透某个技术点时，那电光石火的一瞬。我把这些片刻安放于此，赠给远方未来的自己，也赠给恰好经过的你。
       </p>
@@ -51,9 +51,7 @@ const recent = sorted.slice(0, 5).map((p) => ({
     font-size: var(--fs-body);
     line-height: 1.8;
     color: var(--text);
-    margin-bottom: 4em;
-    padding-bottom: 2.5em;
-    border-bottom: 0.5px solid var(--border-faint);
+    margin-bottom: 4.5em;
   }
   .home-intro p {
     margin: 0.8em 0;
@@ -61,11 +59,19 @@ const recent = sorted.slice(0, 5).map((p) => ({
   .home-intro strong {
     font-weight: 500;
   }
+  /* Hero line — sized between body and h2 so it reads as a named
+     opener without competing with the site-wide h1 typography. */
+  .home-intro__hero {
+    font-size: clamp(20px, 17.5px + 0.7vw, 26px);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin: 0 0 1em;
+  }
   .home-intro__sig {
     font-family: var(--font-ui);
     font-size: var(--fs-meta);
     color: var(--text-faint);
-    margin-top: 1.6em !important;
+    margin-top: 1.8em !important;
   }
   .home-more {
     font-family: var(--font-ui);
