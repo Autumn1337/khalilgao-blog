@@ -136,7 +136,12 @@
 
 .prose figure {
   margin: var(--gap-figure) auto;
-  text-align: center;
+  /* Children that need centering set it themselves:
+     .prose img → margin-inline: auto
+     .prose figcaption → text-align: center
+     Applying text-align: center here also centers inline-block code
+     lines inside figure.code-block (shiki's figure wrapper), which
+     makes whole code blocks appear centered. */
 }
 
 .prose figcaption {
