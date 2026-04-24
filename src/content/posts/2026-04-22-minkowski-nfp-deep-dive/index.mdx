@@ -45,7 +45,7 @@ bool tryPlaceAt(const Piece& p, Vec2 offset) {
 两个点集 *A*、*B* 的 Minkowski 和定义是：
 
 $$
-A \oplus B \;=\; \lbrace\, a + b \,:\, a \in A,\; b \in B \,\rbrace
+A \oplus B \;=\; \{\, a + b \,:\, a \in A,\; b \in B \,\}
 $$
 
 几何直觉更好记：**把 B 的原点沿着 A 的每一个点"搬一遍"，所有扫过的区域的并集，就是 A⊕B**。
@@ -89,7 +89,7 @@ Polygon minkowskiSum(const Polygon& A, const Polygon& B) {
 NFP（*No-Fit Polygon*）的定义是：**B 贴着 A 的边界滑一圈时，B 的参考点（通常取质心）扫过的轨迹**。翻译成集合运算：
 
 $$
-\operatorname{NFP}(A, B) \;=\; A \oplus (-B)
+\mathrm{NFP}(A, B) \;=\; A \oplus (-B)
 $$
 
 其中 `-B` 等于 `{ -b ∣ b ∈ B }`，也就是 B 关于原点的反射。这个结论不需要新算法——Minkowski 和那套代码直接复用，把 B 先取反就行。
@@ -99,8 +99,8 @@ $$
 ```mermaid
 graph LR
   A[读入 n 个多边形] --> B[凸分解 + 预计算 NFP_ij]
-  B --> C[贪心放置]
-  C -->|offset 在 NFP 外| D[布局合法 接受]
+  B --> C{贪心放置}
+  C -->|查询 offset 是否在 NFP 外| D[布局合法 → 接受]
   C -->|否则| E[下一候选位置]
   D --> F[继续放剩余件]
   E --> C
