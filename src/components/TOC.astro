@@ -18,16 +18,53 @@ const {
   hideLabel = false,
   ariaLabel = '文章目录',
 } = Astro.props;
-const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+/** Group H3 under their nearest preceding H2 so the TOC can collapse H3
+ *  entries by default and only reveal the section currently being read. */
+type H2Node = {
+  h2: Props['headings'][number];
+  children: Props['headings'];
+};
+
+const tree: H2Node[] = [];
+let cursor: H2Node | null = null;
+for (const h of headings) {
+  if (h.depth === 2) {
+    cursor = { h2: h, children: [] };
+    tree.push(cursor);
+  } else if (h.depth === 3 && cursor) {
+    cursor.children.push(h);
+  }
+}
 ---
 
-{items.length > 0 && (
+{tree.length > 0 && (
   <nav class="toc" aria-label={ariaLabel}>
     {!hideLabel && <p class="toc__label">{label}</p>}
     <ol class="toc__list">
-      {items.map((h) => (
-        <li class="toc__item" data-depth={h.depth}>
-          <a href={`#${h.slug}`} data-toc-link={h.slug}>{h.text}</a>
+      {tree.map((node) => (
+        <li
+          class="toc__item"
+          data-depth="2"
+          data-slug={node.h2.slug}
+        >
+          <a href={`#${node.h2.slug}`} data-toc-link={node.h2.slug}>
+            {node.h2.text}
+          </a>
+          {node.children.length > 0 && (
+            <ol class="toc__sub">
+              {node.children.map((c) => (
+                <li
+                  class="toc__item"
+                  data-depth="3"
+                  data-slug={c.slug}
+                  data-parent={node.h2.slug}
+                >
+                  <a href={`#${c.slug}`} data-toc-link={c.slug}>{c.text}</a>
+                </li>
+              ))}
+            </ol>
+          )}
         </li>
       ))}
     </ol>
@@ -52,28 +89,42 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
     margin: 0;
     font-family: var(--font-ui);
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.55;
+  }
+  /* Nested H3 list: hidden by default, shown only for the currently-
+     expanded H2 (the one that contains the active heading). */
+  .toc__sub {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: none;
+  }
+  .toc__item[data-expanded='true'] > .toc__sub {
+    display: block;
+    margin-top: 0.25em;
+    padding-bottom: 0.2em;
   }
   .toc__item {
-    margin: 0.4em 0;
+    margin: 0.35em 0;
     border-left: 2px solid transparent;
     padding-left: 0.8em;
     margin-left: -0.8em;
     transition: border-color 120ms ease;
   }
   .toc__item[data-depth='3'] {
-    padding-left: 1.8em;
-    font-size: 11.5px;
+    padding-left: 1.6em;
+    font-size: 11px;
+    margin: 0.2em 0;
   }
   .toc__item a {
-    color: var(--text-muted);
+    color: var(--text-faint);
     text-decoration: none;
     transition: var(--t-link);
     display: block;
     padding: 1px 0;
   }
   .toc__item a:hover {
-    color: var(--text);
+    color: var(--text-muted);
   }
   .toc__item.is-active {
     border-left-color: var(--text-muted);
@@ -106,14 +157,49 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
       .filter((el): el is HTMLElement => !!el);
     if (targets.length === 0) return;
 
+    // Collect H2 items keyed by slug so we can toggle data-expanded on the
+    // node whose subsection is currently being read.
+    const h2BySlug = new Map<string, HTMLElement[]>();
+    for (const item of items) {
+      if (item.dataset.depth !== '2') continue;
+      const slug = item.dataset.slug;
+      if (!slug) continue;
+      const bucket = h2BySlug.get(slug);
+      if (bucket) bucket.push(item);
+      else h2BySlug.set(slug, [item]);
+    }
+
+    /** Given an active slug, return the H2 slug that should be expanded. */
+    const h2ForActive = (slug: string): string | null => {
+      const nodes = bySlug.get(slug);
+      if (!nodes || nodes.length === 0) return null;
+      const first = nodes[0];
+      if (first.dataset.depth === '2') return slug;
+      if (first.dataset.depth === '3') return first.dataset.parent ?? null;
+      return null;
+    };
+
     const visible = new Set<string>();
     let activeId: string | null = null;
+    let expandedH2: string | null = null;
+
+    const setExpanded = (h2Slug: string | null) => {
+      if (h2Slug === expandedH2) return;
+      if (expandedH2) {
+        h2BySlug.get(expandedH2)?.forEach((el) => el.removeAttribute('data-expanded'));
+      }
+      if (h2Slug) {
+        h2BySlug.get(h2Slug)?.forEach((el) => el.setAttribute('data-expanded', 'true'));
+      }
+      expandedH2 = h2Slug;
+    };
 
     const setActive = (id: string | null) => {
       if (id === activeId) return;
       if (activeId) bySlug.get(activeId)?.forEach((el) => el.classList.remove('is-active'));
       if (id) bySlug.get(id)?.forEach((el) => el.classList.add('is-active'));
       activeId = id;
+      setExpanded(id ? h2ForActive(id) : null);
     };
 
     const recompute = () => {
