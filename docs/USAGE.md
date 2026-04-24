@@ -361,6 +361,67 @@ npm run check        # astro check（TypeScript + 内容 schema 校验）
 
 ---
 
+## 与 AI 协作写文章
+
+### MDX 和普通 MD 的区别（对作者而言）
+
+日常写作 99% 和 Markdown 一致。只有三点不同：
+
+1. **扩展名是 `.mdx`**，不是 `.md`
+2. **可以在正文里混 JSX 组件**：`<Figure>` / `<WideFigure>` 之类。普通 MD 做不到
+3. **裸 `{` 会被当 JSX 表达式**，要显示字面量 `{` 写 `\{`。这是唯一陷阱
+
+其他 Markdown 元素（标题、粗体、列表、反引号代码、表格、`[^1]` 脚注、`$$` 数学块）全部通用。
+
+### 新会话里让 AI 起草新文章
+
+直接把下面这段改一下丢给它：
+
+````markdown
+帮我写一篇新文章放到
+/mnt/e/blog/src/content/posts/YYYY-MM-DD-slug/index.mdx
+
+主题：[一句话]
+要覆盖的点：
+- ...
+- ...
+
+按 docs/USAGE.md 约定：
+- frontmatter 含 title / pubDate / tags / description
+- 图片用 <Figure> / <WideFigure>，放 ./assets/
+- 代码块带 filename + 必要的 {n-m} 行高亮
+- 正文避免裸 {
+- 从 H2 开始写（H1 由 title 自动渲染）
+
+写完跑 `npm run dev` 看一下、修细节、commit push。
+````
+
+靠谱的 AI 会：读 `docs/USAGE.md` 和现有 demo 文章（`src/content/posts/2026-04-22-*`）对齐风格 → 建目录 / 写 frontmatter / 起草正文 → 验证 build → commit push。
+
+### 给 AI 的素材格式
+
+| 素材类型 | 最省事的给法 |
+|---|---|
+| 图片 | 先放 `./assets/fig1.png`，告诉 AI 文件名 + 一句 alt 文案 |
+| 代码 | 直接贴原文 + 文件名 + 要高亮哪几行 |
+| 数据表 | 直接贴 Markdown 表格或 CSV，让 AI 转 |
+| 引用 | 贴原文 + 作者 / 出处 / 年份 |
+| 数学公式 | 贴 LaTeX 源码，说明是行内还是块级 |
+| Mermaid 流程图 | 直接贴 ```mermaid 代码块 |
+
+### 让 AI 改现有文章
+
+```
+帮我修 src/content/posts/2026-04-22-minkowski-nfp-deep-dive/index.mdx：
+- 第 3 节 "从 Minkowski 差推导 NFP" 的第一段改成 [新内容]
+- 最后加一张图 <WideFigure>，图放 ./assets/fig3-bench.svg
+- 修完帮我 commit push
+```
+
+AI 不要把文章整个改写——明确说"只改哪里 / 新增什么"，保留原结构的信号越清晰，协作越顺。
+
+---
+
 ## 出问题问我
 
 我（Claude）记得这份 spec 的每一处设计选择。碰上"为什么我改了 X 但没生效"这种问题，直接把情况贴过来，我帮你定位。
