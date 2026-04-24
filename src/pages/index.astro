@@ -19,14 +19,11 @@ const recent = sorted.slice(0, 5).map((p) => ({
 <BaseLayout title="Khalil's Notes">
   <div class="home container-prose">
     <section class="home-intro">
+      <p>这里是 <strong>Khalil's Notes</strong>。</p>
       <p>
-        这里是 <strong>Khalil's Notes</strong>。<br />
-        关于 AI 工具链、C/C++ 优化、算法竞赛和系统工程的长篇技术笔记。
+        写代码的间隙，把脑子里路过的东西截住，变成文字。有时候是一个优化的思路，有时候是一段弯路的复盘，有时候只是对某样技术突然想通了的那一刻。写完放在这里，留给以后的自己，也留给刚好路过的你。
       </p>
-      <p>
-        写作者是 Hewen Gao（handle：Khalil）。偶尔更新，每次写长文。
-        不做短文、不做广告、不做追踪。
-      </p>
+      <p class="home-intro__sig">Hewen Gao</p>
     </section>
 
     <section class="home-recent">
@@ -61,6 +58,12 @@ const recent = sorted.slice(0, 5).map((p) => ({
   }
   .home-intro strong {
     font-weight: 500;
+  }
+  .home-intro__sig {
+    font-family: var(--font-ui);
+    font-size: var(--fs-meta);
+    color: var(--text-faint);
+    margin-top: 1.6em !important;
   }
   .home-more {
     font-family: var(--font-ui);
