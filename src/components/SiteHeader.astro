@@ -1,0 +1,84 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const nav: Array<{ href: string; label: string }> = [
+  { href: '/archive/', label: '归档' },
+  { href: '/tags/', label: '标签' },
+  { href: '/about/', label: '关于' },
+];
+
+// active detection keeps trailing slash consistent with config
+const here = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="site-header__inner container">
+    <a href="/" class="site-title" rel="home">Khalil&#39;s Notes</a>
+    <nav class="site-nav" aria-label="主导航">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={['site-nav__link', { 'is-active': here.startsWith(item.href) }]}
+        >
+          {item.label}
+        </a>
+      ))}
+      <ThemeToggle />
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    padding: 1.15rem 0;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    transition: var(--t-theme);
+  }
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+  .site-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    text-decoration: none;
+  }
+  .site-title:hover {
+    color: var(--text);
+  }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    font-family: var(--font-ui);
+    font-size: 13px;
+  }
+  .site-nav__link {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .site-nav__link:hover {
+    color: var(--text);
+  }
+  .site-nav__link.is-active {
+    color: var(--text);
+  }
+  @media (max-width: 480px) {
+    .site-header {
+      padding: 0.9rem 0;
+    }
+    .site-title {
+      font-size: 16px;
+    }
+    .site-nav {
+      gap: 1rem;
+      font-size: 12px;
+    }
+  }
+</style>

@@ -1,0 +1,312 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import type { CollectionEntry } from 'astro:content';
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  headings: Array<{ depth: number; text: string; slug: string }>;
+  prev?: CollectionEntry<'posts'> | null;
+  next?: CollectionEntry<'posts'> | null;
+  readingTime?: number;
+}
+
+const { post, headings, prev = null, next = null, readingTime } = Astro.props;
+const d = post.data;
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const showToc = d.toc !== false && tocHeadings.length > 0;
+
+function fmtDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+---
+
+<BaseLayout
+  title={d.title}
+  description={d.description}
+  lang={d.lang}
+  article={{ pubDate: d.pubDate, updatedDate: d.updatedDate, tags: d.tags }}
+>
+  <article class="post">
+    <div class="post-layout" data-has-toc={showToc ? 'true' : 'false'}>
+      {showToc && (
+        <aside class="post-toc-slot" aria-label="文章目录">
+          <nav class="toc-fallback">
+            <p class="toc-fallback__label">目录</p>
+            <ol class="toc-fallback__list">
+              {tocHeadings.map((h) => (
+                <li data-depth={h.depth}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+      )}
+
+      <div class="post-main">
+        <header class="post-head">
+          <h1 class="post-title">{d.title}</h1>
+          <p class="post-meta">
+            <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
+            {readingTime !== undefined && (
+              <>
+                <span class="sep" aria-hidden="true">·</span>
+                <span>{readingTime} min read</span>
+              </>
+            )}
+            {d.updatedDate && (
+              <>
+                <span class="sep" aria-hidden="true">·</span>
+                <span>更新于 <time datetime={d.updatedDate.toISOString()}>{fmtDate(d.updatedDate)}</time></span>
+              </>
+            )}
+            {d.tags.length > 0 && (
+              <>
+                <span class="sep" aria-hidden="true">·</span>
+                <span class="post-meta-tags">
+                  {d.tags.map((t) => (
+                    <a href={`/tags/${t}/`} class="post-meta-tag">{t}</a>
+                  ))}
+                </span>
+              </>
+            )}
+          </p>
+        </header>
+
+        <div class="post-body prose">
+          <slot />
+        </div>
+
+        <footer class="post-foot">
+          <hr class="post-foot__rule" />
+          {d.tags.length > 0 && (
+            <p class="post-tags">
+              {d.tags.map((t) => (
+                <a href={`/tags/${t}/`} class="post-tag">{t}</a>
+              ))}
+            </p>
+          )}
+          <p class="post-author">Hewen Gao · {fmtDate(d.pubDate)}</p>
+          {(prev || next) && (
+            <nav class="post-prev-next" aria-label="相邻文章">
+              {prev ? (
+                <a class="pn pn--prev" href={`/posts/${prev.slug}/`}>
+                  <span class="pn__label">← 上一篇</span>
+                  <span class="pn__title">{prev.data.title}</span>
+                </a>
+              ) : <span />}
+              {next ? (
+                <a class="pn pn--next" href={`/posts/${next.slug}/`}>
+                  <span class="pn__label">下一篇 →</span>
+                  <span class="pn__title">{next.data.title}</span>
+                </a>
+              ) : <span />}
+            </nav>
+          )}
+        </footer>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .post {
+    padding: 2.5rem 0 3.5rem;
+  }
+
+  /* Narrow screens: single column, no TOC. */
+  .post-layout {
+    max-width: var(--w-wide);
+    margin-inline: auto;
+    padding-inline: var(--pad-x);
+  }
+
+  /* --- Three-column grid for full-body prose (breakout support) --- */
+  .post-body {
+    display: grid;
+    grid-template-columns:
+      [full-start] minmax(0, 1fr)
+      [wide-start] minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2))
+      [prose-start] minmax(0, var(--w-prose)) [prose-end]
+      minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2)) [wide-end]
+      minmax(0, 1fr) [full-end];
+  }
+  .post-body > * {
+    grid-column: prose;
+    min-width: 0;
+  }
+  .post-body > :global(.wide-figure),
+  .post-body > :global(figure.wide) {
+    grid-column: wide;
+  }
+  .post-body > :global(.full-bleed) {
+    grid-column: full;
+  }
+
+  /* Header (title + meta) stays in prose column too. */
+  .post-head,
+  .post-foot {
+    max-width: var(--w-prose);
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .post-head {
+    margin-bottom: 2.2rem;
+  }
+  .post-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+    font-weight: var(--fw-heading);
+    margin: 0 0 0.7em;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .post-meta {
+    font-family: var(--font-ui);
+    font-size: var(--fs-meta);
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+  .post-meta .sep {
+    margin: 0 0.45em;
+    color: var(--text-faint);
+  }
+  .post-meta-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0 0.6em;
+  }
+  .post-meta-tag {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .post-meta-tag::before { content: '#'; color: var(--text-faint); margin-right: 1px; }
+  .post-meta-tag:hover { color: var(--text); }
+
+  /* Foot */
+  .post-foot {
+    margin-top: 3.5rem;
+  }
+  .post-foot__rule {
+    border: 0;
+    border-top: 0.5px solid var(--border);
+    margin: 0 0 1.4em;
+    max-width: none;
+  }
+  .post-tags {
+    margin: 0 0 1em;
+    line-height: 1.8;
+  }
+  .post-tag {
+    display: inline-block;
+    font-family: var(--font-ui);
+    font-size: var(--fs-tag);
+    padding: 2px 8px;
+    margin-right: 6px;
+    background: var(--border-faint);
+    color: var(--text-muted);
+    border-radius: var(--r-tag);
+    text-decoration: none;
+  }
+  .post-tag:hover {
+    color: var(--text);
+    background: var(--border);
+  }
+  .post-author {
+    font-family: var(--font-ui);
+    font-size: var(--fs-meta);
+    color: var(--text-faint);
+    margin: 0 0 2em;
+  }
+
+  .post-prev-next {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  .pn {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0.75em 1em;
+    border: 0.5px solid var(--border);
+    border-radius: var(--r-btn);
+    color: var(--text);
+    font-size: 0.95em;
+    line-height: 1.35;
+    text-decoration: none;
+  }
+  .pn:hover {
+    border-color: var(--text-muted);
+  }
+  .pn__label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .pn__title {
+    color: var(--text);
+  }
+  .pn--next {
+    text-align: right;
+  }
+
+  /* --- Desktop (≥1100px): TOC sidebar appears. --- */
+  @media (min-width: 1100px) {
+    .post-layout[data-has-toc='true'] {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 40px;
+      max-width: var(--w-wide);
+    }
+    .post-toc-slot {
+      position: sticky;
+      top: 5rem;
+      align-self: start;
+      max-height: calc(100vh - 7rem);
+      overflow-y: auto;
+      padding-right: 0.5em;
+    }
+  }
+  @media (max-width: 1099px) {
+    .post-toc-slot { display: none; }
+  }
+
+  /* TOC fallback (used before Stage 5's component replaces it) */
+  .toc-fallback__label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 0.8em;
+  }
+  .toc-fallback__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .toc-fallback__list li { margin: 0.35em 0; }
+  .toc-fallback__list li[data-depth='3'] { padding-left: 1em; }
+  .toc-fallback__list a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .toc-fallback__list a:hover { color: var(--text); }
+
+  @media (max-width: 640px) {
+    .post { padding: 1.5rem 0 2rem; }
+    .post-head { margin-bottom: 1.5rem; }
+    .post-prev-next { grid-template-columns: 1fr; }
+    .pn--next { text-align: left; }
+  }
+</style>

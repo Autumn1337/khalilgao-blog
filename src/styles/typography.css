@@ -11,10 +11,9 @@
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--text);
-  max-width: var(--w-prose);
-  margin-inline: auto;
-  padding-inline: var(--pad-x);
-  /* prevent CJK kerning jank on long paragraphs */
+  /* width/padding are the caller's responsibility — use .container-prose
+     for simple pages, or PostLayout's three-column grid for articles that
+     need WideFigure breakout. */
   text-spacing-trim: space-all;
   word-break: normal;
   overflow-wrap: break-word;
