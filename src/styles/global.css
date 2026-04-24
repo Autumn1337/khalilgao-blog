@@ -22,6 +22,13 @@ html {
      or theme toggles — noticeable as a page-margin mismatch between
      light and dark screenshots. */
   scrollbar-gutter: stable;
+  /* Page-level scrollbar palette. Without this, Firefox/Edge/Chrome
+     fall back to the OS default scrollbar, which in dark mode reads
+     as a bright strip against the near-black background. Using the
+     border token keeps the scrollbar visually consistent with the
+     other site chrome (table-wrap, code blocks). */
+  scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin;
 }
 
 html,
@@ -160,6 +167,17 @@ hr {
   padding-bottom: 0.5em;
   border-bottom: 0.5px solid var(--border);
   margin-bottom: 1.5em;
+}
+
+/* Mobile scroll offset ------------------------------------- */
+
+/* Header is ~80px on desktop (sticky + padding), ~52px on mobile.
+   Matching scroll-padding-top avoids leaving a big empty stripe
+   above the heading when a TOC link fires an anchor jump. */
+@media (max-width: 640px) {
+  html {
+    scroll-padding-top: 3.5rem;
+  }
 }
 
 /* Respect users who don't want motion ----------------------- */
