@@ -82,7 +82,7 @@ tags: [c++, algorithms]
 | 字段 | 类型 | 默认 | 作用 |
 |---|---|---|---|
 | `title` | string | **必填** | 文章标题（H1 + tab 标题 + OG） |
-| `pubDate` | date | **必填** | 发布日期，ISO 格式 `2026-05-10` |
+| `pubDate` | date | **必填** | 发布日期，ISO 格式 `2026-05-10`；同一天发多篇时用带时间的 UTC ISO 做 tiebreaker，例 `2026-05-10T13:15:00Z`（详见下方） |
 | `description` | string | — | 摘要；缺省时首页卡片自动从正文截前 140 字 |
 | `updatedDate` | date | — | 更新日期，显示为 "更新于 YYYY-MM-DD" |
 | `tags` | string[] | `[]` | 标签列表；自动汇总到 `/tags/` 页 |
@@ -96,6 +96,25 @@ tags: [c++, algorithms]
 - 英文优先（URL 和跨语言搜索友好）
 - 单篇 3–5 个为宜，不超过 7
 - 特殊字符自动处理：`c++` → URL `/tags/c-plus-plus/`，`c#` → `/tags/c-sharp/`
+
+### 同一天发多篇文章
+
+首页 / 归档 / RSS 按 `pubDate` 降序排序。如果两篇的 `pubDate`
+精度只到日（`2026-05-10`），排序比较结果为 0，最终顺序会按
+content collection 读取的目录字母序来——不等于发表先后。
+
+解决：同一天发两篇及以上时，`pubDate` 带上 UTC 时间戳做次级排序。
+
+```yaml
+# 先发这篇
+pubDate: 2026-05-10T12:00:00Z
+# 后发这篇（会排在前面）
+pubDate: 2026-05-10T13:15:00Z
+```
+
+用 UTC 时区（`Z` 后缀）而不是本地 offset（`+08:00`），避免跨时区
+时日期显示漂移——日期的 `<time>` 元素和卡片上的日期都走
+`getUTC*`，如果 UTC 日期和意图不一致会显示错日子。
 
 ---
 
