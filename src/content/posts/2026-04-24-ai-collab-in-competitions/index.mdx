@@ -6,9 +6,6 @@ tags: [ai-collaboration, methodology, competition, workflow]
 toc: true
 ---
 
-import Figure from '../../../components/Figure.astro';
-import figZones from './assets/fig-automation-zones.svg';
-
 ## 开篇：你面对的真问题不是"用AI"，而是"分工"
 
 人们谈"用好AI"时，默认把它理解为"让AI帮更多忙"。这个默认是错的。
@@ -246,12 +243,6 @@ GPT那份方案里有个好建议——把每个failing case变成regression tes
 你memory里能看到你对infra的倾向（你自己已经意识到这一点，memory里有专门移除相关描述的记录）。保持这个自觉——每次想搭新infra之前问自己：**上一次这玩意没有的时候，具体哪个决策做错了**？答不上来就别搭。
 
 ### 规则三：自动化的三色分区
-
-<Figure
-  src={figZones}
-  alt="自动化三色分区：绿色区是无脑自动化的机械任务（bench 执行、diff report、提交打包、数据聚合），AI 全权、你不看；黄色区是半自动化的带人类 checkpoint 任务（分数录入、hypothesis 记录、失败 case 归类），AI 降摩擦、你确认；红色区是不该全自动化的决策任务（决策、根因分析、portfolio 分配、方向选择），AI 只做 dashboard、你决定。"
-  caption="图 1. 比赛任务按可自动化程度的三色分区。"
-/>
 
 绿色区（无脑自动化）：机械的、无决策的、重复的。bench执行、diff report、提交打包、数据聚合。这些不自动化纯粹是浪费时间，投入当天回本。
 
