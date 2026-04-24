@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkPangu from 'remark-pangu';
 import { visit } from 'unist-util-visit';
+import { transformerCodeChrome } from './src/lib/shiki-transformers.mjs';
 
 /**
  * Rewrite ```mermaid code fences into
@@ -47,6 +48,7 @@ export default defineConfig({
         dark: 'github-dark-dimmed',
       },
       wrap: false,
+      transformers: [transformerCodeChrome()],
     },
   },
   vite: {

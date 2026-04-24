@@ -120,5 +120,32 @@ const absOgImage = ogImage ? new URL(ogImage, Astro.site).href : undefined;
       <slot />
     </main>
     <SiteFooter />
+
+    <script>
+      // Delegated copy-button handler for Shiki code blocks (stage 6).
+      // Single listener covers every .code-copy-btn on the page, including
+      // any that are re-rendered by client-side components.
+      document.addEventListener('click', async (e) => {
+        const target = e.target as HTMLElement;
+        const btn = target.closest<HTMLButtonElement>('button[data-code-copy]');
+        if (!btn) return;
+        const block = btn.closest<HTMLElement>('.code-block');
+        const pre = block?.querySelector<HTMLElement>('pre');
+        if (!pre) return;
+        const text = pre.innerText;
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.setAttribute('data-copied', 'true');
+          const original = btn.innerHTML;
+          btn.innerHTML = '已复制';
+          setTimeout(() => {
+            btn.removeAttribute('data-copied');
+            btn.innerHTML = original;
+          }, 1500);
+        } catch (_) {
+          /* clipboard permission denied — silently fail */
+        }
+      });
+    </script>
   </body>
 </html>
