@@ -39,6 +39,9 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
+  devToolbar: {
+    enabled: false,
+  },
   integrations: [
     mdx(),
     sitemap({
