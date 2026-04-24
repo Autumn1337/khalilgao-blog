@@ -35,6 +35,53 @@ const isHome = Astro.url.pathname === '/';
 const fullTitle = isHome || title === siteName ? siteName : `${title} · ${siteName}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const absOgImage = ogImage ? new URL(ogImage, Astro.site).href : undefined;
+
+// Structured data — schema.org Article on post pages, WebSite
+// elsewhere. Search engines use this to render rich result cards;
+// IM link-preview services (Telegram/Discord) also read it to
+// supplement OG meta when OG is ambiguous.
+const jsonLd = article
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: title,
+      description: displayDescription,
+      datePublished: article.pubDate.toISOString(),
+      ...(article.updatedDate && {
+        dateModified: article.updatedDate.toISOString(),
+      }),
+      author: {
+        '@type': 'Person',
+        name: 'Hewen Gao',
+        url: new URL('/about/', Astro.site).href,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: siteName,
+        url: Astro.site?.href,
+      },
+      url: canonical.href,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': canonical.href,
+      },
+      ...(absOgImage && { image: absOgImage }),
+      ...(article.tags &&
+        article.tags.length > 0 && { keywords: article.tags.join(', ') }),
+      inLanguage: lang === 'zh' ? 'zh-CN' : 'en-US',
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: siteName,
+      url: Astro.site?.href,
+      description: siteDescription,
+      inLanguage: lang === 'zh' ? 'zh-CN' : 'en-US',
+      author: {
+        '@type': 'Person',
+        name: 'Hewen Gao',
+      },
+    };
 ---
 
 <!DOCTYPE html>
@@ -88,6 +135,14 @@ const absOgImage = ogImage ? new URL(ogImage, Astro.site).href : undefined;
     )}
     {article?.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
 
+    <!-- Structured data (JSON-LD). Rendered inline so crawlers see it on
+         first paint. Article schema on posts, WebSite elsewhere. -->
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(jsonLd)}
+    />
+
     <!-- Preload body font (English subset, covers Latin fallback fastest).
          NotoSerifSC is ~1MB per weight so we intentionally don't preload
          it — font-display:swap + system CJK fallback handles first paint. -->
@@ -101,6 +156,14 @@ const absOgImage = ogImage ? new URL(ogImage, Astro.site).href : undefined;
     <link
       rel="preload"
       href="/fonts/NotoSerifSC-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      fetchpriority="low"
+    />
+    <link
+      rel="preload"
+      href="/fonts/JetBrainsMono-var.woff2"
       as="font"
       type="font/woff2"
       crossorigin
