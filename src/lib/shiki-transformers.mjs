@@ -53,13 +53,13 @@ export function transformerCodeChrome() {
     line(node, line) {
       const parsed = this.meta.__chrome;
       if (!parsed || !parsed.highlights.has(line)) return;
-      const classes = Array.isArray(node.properties.className)
-        ? node.properties.className
-        : typeof node.properties.className === 'string'
-          ? [node.properties.className]
-          : [];
+      // shiki uses `properties.class` as a plain string — keep that shape
+      // so hast-util-to-html doesn't emit a duplicate class attribute.
+      const existing =
+        typeof node.properties.class === 'string' ? node.properties.class : '';
+      const classes = existing.split(/\s+/).filter(Boolean);
       if (!classes.includes('highlighted')) classes.push('highlighted');
-      node.properties.className = classes;
+      node.properties.class = classes.join(' ');
     },
     pre(node) {
       const parsed = this.meta.__chrome;

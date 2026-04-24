@@ -1,0 +1,148 @@
+---
+title: Minkowski 差与 NFP：二维包装问题的几何心法
+description: 从 O(nm) 的碰撞检测到 O(1) 的 NFP 查询——一次把 CodeCraft 从 295K 推到 904K 的关键跃迁，关键只有一个词：Minkowski。
+pubDate: 2026-04-22
+updatedDate: 2026-04-24
+tags: [c++, competition, computational-geometry, algorithms]
+toc: true
+---
+
+import Figure from '../../../components/Figure.astro';
+import WideFigure from '../../../components/WideFigure.astro';
+import fig1 from './assets/fig1-mtv.svg';
+import fig2 from './assets/fig2-grid-layout.svg';
+
+二维包装问题（2D bin packing with irregular shapes）是那种"看起来简单、写起来爆炸"的题。前半段你只需要一个 polygon-polygon collision check。后半段你需要它每秒跑一千万次。
+
+这篇笔记记录从 **295K** 分冲到 **904K** 中，最关键那一步——换掉朴素的逐段碰撞检测，换成基于 Minkowski 差的 NFP 查询。
+
+## 背景：碰撞检测为什么卡了这么久
+
+比赛题目给出 *n* 个凹多边形（每个 3–40 顶点）和一个固定大小的容器，要求摆放尽可能多的件数，不能重叠、不能出界。
+
+一个很自然的贪心循环长这样：
+
+```cpp pack-naive.cpp {4-8}
+bool tryPlaceAt(const Piece& p, Vec2 offset) {
+  for (const Piece& other : placed) {
+    // naive: 段段相交 + 点在多边形内
+    for (auto ea : edges(p.translated(offset))) {
+      for (auto eb : edges(other)) {
+        if (segmentsIntersect(ea, eb)) return false;
+      }
+    }
+  }
+  return true;
+}
+```
+
+第 4–8 行是全部热点。每次查询的复杂度是 *O(nm)*，里面还有 `sqrt` 和 `atan2`。profiler 上它占了 82% 的运行时间。
+
+> 写完直接提上去 295K。看到 leaderboard 第一名 900K+，人就麻了。
+
+## Minkowski 和，到底在讲什么
+
+两个点集 *A*、*B* 的 Minkowski 和定义是：
+
+$$
+A \oplus B \;=\; \lbrace\, a + b \,:\, a \in A,\; b \in B \,\rbrace
+$$
+
+几何直觉更好记：**把 B 的原点沿着 A 的每一个点"搬一遍"，所有扫过的区域的并集，就是 A⊕B**。
+
+<Figure
+  src={fig1}
+  alt="两个多边形的 Minkowski 和：B 沿着 A 的边界滑动时扫出的包络就是 A ⊕ B"
+  caption="图 1. Minkowski 和的几何构造。淡蓝色虚线是 A 的原形，橙色虚线是 B 在不同位置的副本，绿色轮廓是它们的和。"
+/>
+
+对凸多边形，A⊕B 的每一条边要么来自 A，要么来自 B，按逆时针角度归并即可[^1]。实现起来是一个 *O(n + m)* 的边扫描：
+
+```cpp minkowski-sum.cpp
+// A, B 以逆时针凸多边形表示
+Polygon minkowskiSum(const Polygon& A, const Polygon& B) {
+  // 1. 找 A、B 各自 y 最小（相同取 x 最小）的顶点作为起点
+  int i = leftmostBottom(A), j = leftmostBottom(B);
+  const int n = A.size(), m = B.size();
+  Polygon C;
+  C.reserve(n + m);
+
+  int a = 0, b = 0;
+  while (a < n || b < m) {
+    // 当前两条待合并的边
+    Vec2 ea = A[(i + a + 1) % n] - A[(i + a) % n];
+    Vec2 eb = B[(j + b + 1) % m] - B[(j + b) % m];
+    C.push_back(A[(i + a) % n] + B[(j + b) % m]);
+    double cross = ea.x * eb.y - ea.y * eb.x;
+    if      (cross > 0) { ++a; }
+    else if (cross < 0) { ++b; }
+    else                { ++a; ++b; }
+  }
+  return C;
+}
+```
+
+凹多边形要先用 Bayazit 做凸分解，各对凸子多边形求 Minkowski 和，再做并集。实践里 30–40 顶点的凹件，分解后 *k ≤ 6* 个子件，后续求和 *k²* 对——这个预处理是"一次性成本"。
+
+## 从 Minkowski 差推导 NFP
+
+NFP（*No-Fit Polygon*）的定义是：**B 贴着 A 的边界滑一圈时，B 的参考点（通常取质心）扫过的轨迹**。翻译成集合运算：
+
+$$
+\operatorname{NFP}(A, B) \;=\; A \oplus (-B)
+$$
+
+其中 `-B` 等于 `{ -b ∣ b ∈ B }`，也就是 B 关于原点的反射。这个结论不需要新算法——Minkowski 和那套代码直接复用，把 B 先取反就行。
+
+一旦 NFP 预计算好，碰撞检测退化成 **"offset 是否落在 NFP 的内部"** 的点在多边形判定——*O(log n)* via 扇形二分，实测 30ns。
+
+```mermaid
+graph LR
+  A[读入 n 个多边形] --> B[凸分解 + 预计算 NFP_ij]
+  B --> C[贪心放置]
+  C -->|offset 在 NFP 外| D[布局合法 接受]
+  C -->|否则| E[下一候选位置]
+  D --> F[继续放剩余件]
+  E --> C
+```
+
+预计算 NFP 的成本是 *O(n² · k² · s)*（s 是子件顶点数，常数 ≤ 40）。在 n = 120 的数据下大概 300ms，一次就行。
+
+## 效果：卡点没了，性能才上来
+
+<WideFigure
+  src={fig2}
+  alt="朴素布局与 NFP 引导布局的视觉对比"
+  caption="图 2. 左：没有 NFP 时贪心留下的大量锯齿状空隙；右：NFP 提供的 touching 约束下，形状自然嵌合。同一组输入，容器利用率 73.8% → 90.4%。"
+/>
+
+把整个 pipeline 接上去之后，热点从"段段相交"变成了"点在多边形二分"，分数从 295K 一路跳到 904K。下面是我自己 bench 的一组数据（1M 随机查询，单线程，M1 Pro）：
+
+| 方案                            | 预处理     | 单次查询 | 1M 查询总耗时 |
+| ------------------------------- | ---------- | -------- | ------------- |
+| 朴素段段相交                    | 无         | 4.2 µs   | 4.20 s        |
+| Bounding-box 剪枝 + 段段相交    | 40 ms      | 0.9 µs   | 0.90 s        |
+| **NFP 预计算 + 点在多边形二分** | **310 ms** | **34 ns**| **0.034 s**   |
+
+`124×` 的加速，全部来自"把碰撞检测从几何问题搬到空间索引问题"。工程上需要注意的地方我用脚注记下来[^2]。
+
+### 实现里最容易踩的三个坑
+
+1. **凹多边形的 Minkowski 和 ≠ 凸分解后求和的并集**。子件之间会产生"假交集"，需要用 CGAL 的 `boolean union` 或 Vatti 算法再过一遍。这是我 debug 了一整晚才发现的，代价约 5ms，不能跳。
+2. **数值精度**。`cross == 0` 的判断要带 epsilon，否则共线边会漂出去。推荐用整数坐标 × 2^20 放大后做纯整数几何。
+3. **预计算阶段要做成并行 future**。n = 120 时 300ms 串行预处理看似不贵，但在提交阶段 × 100 次实验就是半小时的墙上时间，一次 tokio/thread_pool 就省下来了。
+
+## 小结
+
+- A⊕B 等于"把 B 沿 A 边界扫过一圈"的包络。凸时 *O(n+m)* 可合并，凹时走凸分解。
+- NFP(A, B) 等于 A 和 -B 的 Minkowski 和。一个几何变换，把碰撞判定化为点在多边形判定。
+- **实战最重要的一环**：不要等到性能瓶颈显现才换算法。写完朴素版后就该问"有没有数学结构能帮我预计算"。
+
+> "The geometry of nesting problems is, at heart, a geometry of
+> Minkowski sums. Everything else is indexing." — Bennell & Oliveira, 2008
+
+---
+
+[^1]: 教科书证明见 *Computational Geometry: Algorithms and Applications* 第 13.2 节。直觉上，A⊕B 的每一条边对应"B 靠在 A 某条边上时的一段滑动轨迹"，所以按角度排序即可无冲突归并。
+
+[^2]: NFP 预计算内存是 *O(n² · s)*。n = 120、s ≈ 30 时大约 45 MB，可以全进 cache。一旦上 n = 500，就得考虑延迟计算 + LRU cache（我们没碰到，但 2020 年 ESICUP 赛题会）。

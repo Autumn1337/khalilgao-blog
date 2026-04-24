@@ -8,21 +8,27 @@ import { visit } from 'unist-util-visit';
 import { transformerCodeChrome } from './src/lib/shiki-transformers.mjs';
 
 /**
- * Rewrite ```mermaid code fences into
- *   <pre class="mermaid" data-graph="src">src</pre>
- * so the client Mermaid component can render them on demand.
+ * Rewrite ```mermaid fences at the markdown (mdast) level so Shiki
+ * never sees them as code. Replaces the code node with a raw html
+ * node — a <pre class="mermaid" data-graph="src"> element that the
+ * client-side Mermaid component (PostLayout) finds and renders.
  */
-function rehypeMermaid() {
+function remarkMermaid() {
+  const escape = (s) =>
+    String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   return (tree) => {
-    visit(tree, 'element', (node) => {
-      if (node.tagName !== 'pre') return;
-      const code = node.children?.[0];
-      if (!code || code.type !== 'element' || code.tagName !== 'code') return;
-      const classes = code.properties?.className;
-      if (!Array.isArray(classes) || !classes.includes('language-mermaid')) return;
-      const src = (code.children?.[0]?.value ?? '').trim();
-      node.properties = { className: ['mermaid'], 'data-graph': src };
-      node.children = [{ type: 'text', value: src }];
+    visit(tree, 'code', (node, index, parent) => {
+      if (node.lang !== 'mermaid' || index == null || !parent) return;
+      const src = node.value ?? '';
+      const escaped = escape(src);
+      parent.children[index] = {
+        type: 'html',
+        value: `<pre class="mermaid" data-graph="${escaped}">${escaped}</pre>`,
+      };
     });
   };
 }
@@ -40,8 +46,8 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkMath, remarkPangu],
-    rehypePlugins: [rehypeKatex, rehypeMermaid],
+    remarkPlugins: [remarkMath, remarkPangu, remarkMermaid],
+    rehypePlugins: [rehypeKatex],
     shikiConfig: {
       themes: {
         light: 'github-light',

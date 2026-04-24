@@ -2,6 +2,8 @@ import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+// @ts-expect-error — no bundled types for this Astro internal
+import mdxRenderer from 'astro/jsx/server.js';
 import { postUrl } from '../lib/post-url';
 
 const SITE_TITLE = "Khalil's Notes";
@@ -15,6 +17,7 @@ export async function GET(context: APIContext) {
   );
 
   const container = await AstroContainer.create();
+  container.addServerRenderer({ renderer: mdxRenderer });
 
   const items = await Promise.all(
     sorted.map(async (post) => {
