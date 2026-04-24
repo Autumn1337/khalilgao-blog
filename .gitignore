@@ -40,3 +40,8 @@ public/fonts/raw/
 
 # Local-only operator notes (runbooks etc.) — must not reach public repo
 docs/local/
+
+# Draft staging — .md drafts here get converted + moved into src/content/posts/
+# by the AI; the raw inputs never need to ship to GitHub. README stays tracked.
+needtosubmit/*
+!needtosubmit/README.md

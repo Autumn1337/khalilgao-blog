@@ -420,6 +420,21 @@ npm run check        # astro check（TypeScript + 内容 schema 校验）
 
 AI 不要把文章整个改写——明确说"只改哪里 / 新增什么"，保留原结构的信号越清晰，协作越顺。
 
+### `needtosubmit/` 草稿自动发布
+
+只想写纯 Markdown 不关心 MDX / Astro 结构？把 `.md` 丢进
+`needtosubmit/`，然后对 AI 说"发 needtosubmit/xxx.md"就行。
+
+**需要知道的三件事**（详细见 `needtosubmit/README.md`）：
+
+1. **`.md` 必须有 frontmatter**：至少 `title` + `pubDate`
+2. **图片带走**：和 `.md` 同名子目录 `needtosubmit/xxx/fig.png`，或同名前缀 `needtosubmit/xxx.fig.png`
+3. **触发**："发 needtosubmit/xxx.md" 或 "先 dev 预览不 push"
+
+AI 会：转 MDX / 补 frontmatter / 把 `![](...)` 改成 `<Figure>` / 裸 `{` escape / 本地 build 验证 / commit push / 把原稿挪到 `needtosubmit/.archive/` 留档。
+
+`needtosubmit/` 目录整体 gitignored（`README.md` 例外），原稿不会进公开仓库。
+
 ---
 
 ## 出问题问我
