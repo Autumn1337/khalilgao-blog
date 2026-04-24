@@ -1,12 +1,83 @@
 ---
-// placeholder — full implementation in stage 7
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { readingTime } from '../lib/reading-time';
+
+const all = await getCollection('posts', ({ data }) => {
+  return import.meta.env.PROD ? !data.draft : true;
+});
+const sorted = all.sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const recent = sorted.slice(0, 5).map((p) => ({
+  post: p,
+  rt: readingTime(p.body),
+}));
 ---
-<html lang="zh">
-  <head>
-    <meta charset="utf-8" />
-    <title>Khalil's Notes</title>
-  </head>
-  <body>
-    <p>scaffolded</p>
-  </body>
-</html>
+
+<BaseLayout title="Khalil's Notes">
+  <div class="home container-prose">
+    <section class="home-intro">
+      <p>
+        这里是 <strong>Khalil's Notes</strong>。<br />
+        关于 AI 工具链、C/C++ 优化、算法竞赛和系统工程的长篇技术笔记。
+      </p>
+      <p>
+        写作者是 Hewen Gao（handle：Khalil）。偶尔更新，每次写长文。
+        不做短文、不做广告、不做追踪。
+      </p>
+    </section>
+
+    <section class="home-recent">
+      <p class="section-label">最近文章</p>
+      {recent.length === 0 ? (
+        <p class="home-empty">还在写，先放着。</p>
+      ) : (
+        recent.map(({ post, rt }) => <PostCard post={post} readingTime={rt} />)
+      )}
+      {sorted.length > recent.length && (
+        <p class="home-more">
+          <a href="/archive/">全部文章 →</a>
+        </p>
+      )}
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .home {
+    padding: 2.5rem 0 2rem;
+  }
+  .home-intro {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 3em;
+  }
+  .home-intro p {
+    margin: 0.8em 0;
+  }
+  .home-intro strong {
+    font-weight: 500;
+  }
+  .home-more {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    margin-top: 1em;
+    text-align: right;
+  }
+  .home-more a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .home-more a:hover {
+    color: var(--text);
+  }
+  .home-empty {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+</style>

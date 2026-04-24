@@ -1,0 +1,133 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { postUrl } from '../../lib/post-url';
+import { fmtMonthDay } from '../../lib/date-format';
+
+type Post = CollectionEntry<'posts'>;
+
+export async function getStaticPaths() {
+  const all = await getCollection('posts', ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true,
+  );
+  const tags = new Set<string>();
+  for (const p of all) for (const t of p.data.tags) tags.add(t);
+  return [...tags].map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: all.filter((p) => p.data.tags.includes(tag)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props as { tag: string; posts: Post[] };
+const sorted = [...posts].sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const byYear = new Map<number, Post[]>();
+for (const p of sorted) {
+  const y = p.data.pubDate.getFullYear();
+  const bucket = byYear.get(y);
+  if (bucket) bucket.push(p);
+  else byYear.set(y, [p]);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+---
+
+<BaseLayout
+  title={`#${tag}`}
+  description={`标签 ${tag} 下的全部文章。`}
+>
+  <div class="tag-archive container-prose">
+    <p class="tag-archive__breadcrumb"><a href="/tags/">← 所有标签</a></p>
+    <h1 class="tag-archive__title"><span class="hash">#</span>{tag}</h1>
+    <p class="tag-archive__meta">{sorted.length} 篇</p>
+    {years.map((year) => (
+      <section class="archive-year">
+        <h2>{year}</h2>
+        <ul>
+          {byYear.get(year)!.map((p) => (
+            <li>
+              <time datetime={p.data.pubDate.toISOString()}>
+                {fmtMonthDay(p.data.pubDate)}
+              </time>
+              <a href={postUrl(p)}>{p.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .tag-archive {
+    padding: 2.5rem 0 2rem;
+  }
+  .tag-archive__breadcrumb {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    margin: 0 0 1.2rem;
+  }
+  .tag-archive__breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .tag-archive__breadcrumb a:hover {
+    color: var(--text);
+  }
+  .tag-archive__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+    font-weight: 500;
+    margin: 0 0 0.3em;
+  }
+  .tag-archive__title .hash {
+    color: var(--text-faint);
+    font-weight: 400;
+    margin-right: 2px;
+  }
+  .tag-archive__meta {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 2rem;
+  }
+  .archive-year {
+    margin-bottom: 2rem;
+  }
+  .archive-year h2 {
+    font-family: var(--font-serif);
+    font-size: var(--fs-h2);
+    font-weight: 500;
+    margin: 0 0 0.8em;
+  }
+  .archive-year ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .archive-year li {
+    display: grid;
+    grid-template-columns: 4.2rem 1fr;
+    gap: 1.2rem;
+    align-items: baseline;
+    padding: 0.3em 0;
+  }
+  .archive-year li time {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .archive-year li a {
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-serif);
+    font-size: 17px;
+  }
+  .archive-year li a:hover {
+    color: var(--link);
+  }
+</style>

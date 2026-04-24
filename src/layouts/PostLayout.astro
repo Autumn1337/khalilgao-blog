@@ -5,6 +5,7 @@ import Tag from '../components/Tag.astro';
 import PostMeta from '../components/PostMeta.astro';
 import Mermaid from '../components/Mermaid.astro';
 import { fmtISODate } from '../lib/date-format';
+import { postUrl } from '../lib/post-url';
 import type { CollectionEntry } from 'astro:content';
 
 export interface Props {
@@ -56,13 +57,13 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
           {(prev || next) && (
             <nav class="post-prev-next" aria-label="相邻文章">
               {prev ? (
-                <a class="pn pn--prev" href={`/posts/${prev.slug}/`}>
+                <a class="pn pn--prev" href={postUrl(prev)}>
                   <span class="pn__label">← 上一篇</span>
                   <span class="pn__title">{prev.data.title}</span>
                 </a>
               ) : <span />}
               {next ? (
-                <a class="pn pn--next" href={`/posts/${next.slug}/`}>
+                <a class="pn pn--next" href={postUrl(next)}>
                   <span class="pn__label">下一篇 →</span>
                   <span class="pn__title">{next.data.title}</span>
                 </a>

@@ -1,0 +1,43 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import PostLayout from '../../layouts/PostLayout.astro';
+import { readingTime } from '../../lib/reading-time';
+import { cleanSlug } from '../../lib/post-url';
+
+type Post = CollectionEntry<'posts'>;
+
+export async function getStaticPaths() {
+  const all = await getCollection('posts', ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true,
+  );
+  const chrono = [...all].sort(
+    (a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf(),
+  );
+  return chrono.map((post, i) => ({
+    params: { slug: cleanSlug(post) },
+    props: {
+      post,
+      prev: i > 0 ? chrono[i - 1] : null,
+      next: i < chrono.length - 1 ? chrono[i + 1] : null,
+    },
+  }));
+}
+
+const { post, prev, next } = Astro.props as {
+  post: Post;
+  prev: Post | null;
+  next: Post | null;
+};
+const { Content, headings } = await post.render();
+const rt = readingTime(post.body);
+---
+
+<PostLayout
+  post={post}
+  headings={headings}
+  prev={prev}
+  next={next}
+  readingTime={rt}
+>
+  <Content />
+</PostLayout>

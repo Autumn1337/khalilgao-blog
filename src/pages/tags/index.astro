@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const all = await getCollection('posts', ({ data }) =>
+  import.meta.env.PROD ? !data.draft : true,
+);
+const counts = new Map<string, number>();
+for (const p of all) {
+  for (const t of p.data.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+}
+const tags = [...counts.entries()].sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+);
+---
+
+<BaseLayout title="标签" description="按标签浏览 Khalil's Notes 的文章。">
+  <div class="tags-page container-prose">
+    <h1 class="tags-title">标签</h1>
+    {tags.length === 0 ? (
+      <p class="tags-empty">还没有标签。</p>
+    ) : (
+      <div class="tag-cloud">
+        {tags.map(([name, n]) => (
+          <a href={`/tags/${name}/`} class="tag-item">
+            <span class="tag-item__name">{name}</span>
+            <span class="tag-item__count">{n}</span>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .tags-page {
+    padding: 2.5rem 0 2rem;
+  }
+  .tags-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+    font-weight: 500;
+    margin: 0 0 2rem;
+    letter-spacing: -0.01em;
+  }
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    line-height: 1.6;
+  }
+  .tag-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--text);
+    text-decoration: none;
+    padding: 3px 10px;
+    border: 0.5px solid transparent;
+    border-radius: var(--r-btn);
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .tag-item:hover {
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .tag-item__count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .tags-empty {
+    font-family: var(--font-ui);
+    color: var(--text-muted);
+  }
+</style>

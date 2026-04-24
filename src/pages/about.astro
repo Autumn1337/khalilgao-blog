@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="关于" description="关于 Khalil's Notes 和作者 Hewen Gao。">
+  <article class="about container-prose prose">
+    <h1>关于</h1>
+
+    <p>
+      我是 <strong>Hewen Gao</strong>（handle：Khalil）。这里是我的长文博客
+      <em>Khalil's Notes</em>。
+      <!-- TODO(khalil): 补充自我介绍段落 -->
+    </p>
+
+    <h2>正在做的事</h2>
+    <ul>
+      <li><em>TODO：placeholder — 把正在做的事情列出来。</em></li>
+      <li><em>TODO：比如某个项目、某个方向、某次比赛。</em></li>
+      <li><em>TODO：兴趣、长期关心的题目。</em></li>
+    </ul>
+
+    <h2>联系</h2>
+    <p>
+      邮箱：<a href="mailto:hewen@khalilgao.com">hewen@khalilgao.com</a>
+      <br />
+      GitHub：<a href="https://github.com/khalilgao" rel="me noopener" target="_blank">@khalilgao</a>
+      <br />
+      RSS：<a href="/rss.xml">/rss.xml</a>
+    </p>
+
+    <h2>这个站点</h2>
+    <p>
+      用 Astro 4 + MDX 写成，全静态。字体自托管，无追踪、无广告、无
+      CDN。源码 MIT 开源。设计原则只有一条：<strong>阅读舒适度高于一切</strong>。
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .about {
+    padding: 2.5rem 0 2rem;
+  }
+  .about > h1:first-child {
+    margin-top: 0;
+  }
+</style>

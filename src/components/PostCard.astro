@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import PostMeta from './PostMeta.astro';
+import { postUrl } from '../lib/post-url';
 
 export interface Props {
   post: CollectionEntry<'posts'>;
@@ -31,7 +32,7 @@ const summary = excerpt(post.body, post.data.description);
 
 <article class="post-card">
   <h2 class="post-card__title">
-    <a href={`/posts/${post.slug}/`}>{post.data.title}</a>
+    <a href={postUrl(post)}>{post.data.title}</a>
   </h2>
   <PostMeta post={post} readingTime={readingTime} />
   {summary && <p class="post-card__excerpt">{summary}</p>}
