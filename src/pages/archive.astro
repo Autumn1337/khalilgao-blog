@@ -96,7 +96,7 @@ for (const year of years) {
     color: var(--text);
     text-decoration: none;
     font-family: var(--font-serif);
-    font-size: 17px;
+    font-size: var(--fs-body);
     line-height: 1.5;
   }
   .archive-year li a:hover {
@@ -110,9 +110,6 @@ for (const year of years) {
     .archive-year li {
       grid-template-columns: 3.2rem 1fr;
       gap: 0.9rem;
-    }
-    .archive-year li a {
-      font-size: 16px;
     }
   }
 </style>
