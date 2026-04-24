@@ -37,6 +37,33 @@ major bump.
 from some semver paths. 2.x rewrite works fine with remark 15 /
 MDX 3. No regressions observed.
 
+## satori + @resvg/resvg-js → `^0.26.0` / `^2.6.2`
+
+Drive the per-post OG image route at `src/pages/og/[...slug].png.ts`
+(see CLAUDE.md → "OG image generation"). satori does the JSX-tree →
+SVG layout (yoga-wasm under the hood); @resvg/resvg-js rasterizes
+SVG → PNG.
+
+Why these two and not alternatives:
+
+- **vs `@vercel/og`**: pulls in the same satori under the hood plus
+  Vercel-specific edge runtime helpers we don't need.
+- **vs `astro-og-canvas`**: convenient wrapper but locks layout into
+  a small set of presets. We want the freedom to evolve the card
+  design without fighting an opinionated component API.
+- **vs server-side `puppeteer` / `playwright`**: heavyweight headless
+  Chromium just to render a 1200×630 monochrome card is overkill.
+
+**Constraint to remember:** satori only accepts OTF / TTF for fonts —
+woff2 throws "Unsupported OpenType signature wOF2". The subset script
+(`scripts/subset-noto-serif-sc.py`) has to emit a TTF copy alongside
+the woff2 client subset for this reason. If you try to feed satori
+the public/fonts/*.woff2 directly, the OG route will 500 at build time.
+
+**When to unpin:** satori 0.x line moves quickly; 1.0 will likely
+break the JSX-object API. Hold on `^0.26` until the route renders
+cleanly on a fresh install of the next minor.
+
 ## Why Astro itself is not yet 5.x
 
 Astro 5 is new enough that several integrations (see sitemap above)

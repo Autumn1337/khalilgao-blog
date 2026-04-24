@@ -21,6 +21,7 @@ Authoritative reading order when something isn't obvious:
 | Production build | `npm run build` → `dist/` |
 | Preview built dist | `npm run preview` |
 | Regenerate content types | `npx astro sync` (rarely needed; build does it) |
+| Resubset CJK fonts | `npm run subset-fonts` (= `python3 scripts/subset-noto-serif-sc.py`). Run after a new post introduces glyphs not in the existing subset. Requires Python + `fontTools` + `brotli`. |
 | MDX math/brace probe | `node scripts/mdx-math-probe.mjs` — verifies which `{}` positions parse cleanly through remark-math + remark-pangu |
 
 No test framework. "Verification" = `npm run check && npm run build && visually diff the rendered article`. The demo post at `src/content/posts/2026-04-22-minkowski-nfp-deep-dive/` exercises every component and is the de-facto visual regression fixture.
@@ -80,6 +81,57 @@ Uses `experimental_AstroContainer.create()` + `container.addServerRenderer({ nam
 
 All `fmtISODate` / `fmtMonthDay` / `fmtYear` use `getUTC*` variants. CI runners are UTC, VPS is HKT; without this, a post published near midnight could show a different date in server-rendered HTML vs. local preview.
 
+### pubDate tiebreaker — same-day posts need UTC ISO timestamps
+
+Home / archive / RSS sort by `b.pubDate.valueOf() - a.pubDate.valueOf()` desc. Two posts with date-only `pubDate: 2026-04-24` produce equal millis, sort returns 0, and the final order falls through to `getCollection`'s read order — which is **directory-name alphabetical**. Two same-day posts almost always end up out of publication order this way.
+
+Fix is per-post, not at the sort site: write `pubDate: 2026-04-24T13:15:00Z` for the second post, `2026-04-24T12:00:00Z` for the first. Always use UTC (`Z` suffix), not local offset (`+08:00`) — a local-offset timestamp can land on a different UTC date and the `getUTC*` formatters will show the wrong day.
+
+### Font subset pipeline (fonts-source/ + scripts/subset-noto-serif-sc.py)
+
+NotoSerifSC at the full U+4E00–9FFF block is ~1 MB per weight. The pipeline:
+
+- `fonts-source/NotoSerifSC-{400,500}.woff2` — git-tracked source of truth (full CJK coverage). Sits **outside `public/`** so multi-MB sources don't ship to clients.
+- `scripts/subset-noto-serif-sc.py` — scans `src/content/posts/**/*.mdx` for CJK chars, adds a punctuation safety buffer, then re-subsets via `fontTools.subset` keeping GPOS / GSUB so kerning still works. Outputs:
+  - `public/fonts/NotoSerifSC-{400,500}.woff2` — client-served subset (currently ~180 KB each).
+  - `fonts-source/NotoSerifSC-{400,500}-og.ttf` — TTF copies for the OG-image renderer (satori doesn't accept woff2). TTF is intentionally a superset that includes every post-title char.
+- `npm run subset-fonts` triggers it. **Re-run when a new post introduces glyphs that aren't in the current subset** — the safety buffer covers most punctuation, so a single rare hanzi might still slip through. If a body looks like 豆腐块（squares），that's the symptom.
+
+Spec target was 500 KB total for the CJK font; we're now at ~360 KB across two weights, comfortably under.
+
+### OG image generation (src/pages/og/[...slug].png.ts)
+
+Per-post `/og/<slug>.png` rendered at build time:
+
+- `satori` walks a JSX-like object tree → SVG (yoga-wasm layout engine).
+- `@resvg/resvg-js` rasterizes SVG → PNG.
+- Fonts read from `fonts-source/NotoSerifSC-{400,500}-og.ttf` (read once, module-scoped).
+- Layout: 1200×630 monochrome — small uppercase site label, large serif title, hairline rule, date + domain. Stays on-brand with the prose palette.
+
+`PostLayout.astro` passes `ogImage={`/og/${cleanSlug(post)}.png`}` to `BaseLayout`. BaseLayout fans the URL out into eight share-card meta tags: `og:image` + `og:image:{width,height}`, `twitter:card="summary_large_image"` + `twitter:{title,description,image}`, plus `<meta itemprop="image">` and `<link rel="image_src">` for WeChat/legacy crawlers that don't follow Facebook's `og:*` namespace strictly.
+
+### Structured data (JSON-LD in BaseLayout.astro)
+
+Every page emits a `<script type="application/ld+json">` inline in `<head>`. `Article` schema on post pages (headline, description, dates, author, publisher, url, mainEntityOfPage, image=OG url, keywords=tags, inLanguage), `WebSite` schema everywhere else. Used by Google for rich results, by 百度 for 富摘要, and by Telegram / Discord preview services to supplement OG meta when ambiguous. Inlined via `is:inline set:html={JSON.stringify(...)}` so no Astro transform interferes with the JSON.
+
+### TOC behavior — H2-always, H3 only for active section (src/components/TOC.astro)
+
+A 10k-word post with 22 × h3 inside a 200px sidebar is a wall of text. Current shape:
+
+- TOC.astro groups headings into a tree (h2 nodes carry an `h3[]` children array). Render uses nested `<ol>`: each h2 `<li>` contains its own `.toc__sub` list of h3s.
+- CSS hides `.toc__sub` by default; only the `<li>` with `data-expanded='true'` reveals its children. Resting state is a clean h2-only outline.
+- IntersectionObserver script tracks `expandedH2` alongside `activeId`. When the active heading is an h2 it expands itself; when it's an h3 it looks up `data-parent` and expands the owning h2 instead.
+- Both desktop sidebar and mobile `<details>` instances share the script — `Map<slug, HTMLElement[]>` so the active class and expanded attribute set on every matching instance simultaneously.
+
+If you ever revert to flat-list TOC, also revert the `data-parent` attribute and the `expandedH2` logic; otherwise CSS will hide everything.
+
+### Scrollbar consistency (src/styles/global.css)
+
+Two rules on `<html>` that aren't intuitive but visibly matter:
+
+- `scrollbar-gutter: stable` — always reserves scrollbar space whether the page overflows or not. Without it, theme toggles or short pages cause a 15–17 px content-area jump as the scrollbar appears/disappears, which reads as a "page-margin mismatch between light and dark".
+- `scrollbar-color: var(--border) transparent` + `scrollbar-width: thin` — page-level scrollbar matches the site palette. Without this, dark mode falls back to the OS default scrollbar, which is a bright stripe against the near-black bg. Code blocks and `.table-wrap` had this rule earlier; promoting it to `<html>` covers everything.
+
 ## MDX caveats (real ones we've hit)
 
 - **Bare `{` in prose text fails** — MDX 3 tokenises it as a JSX expression. Safe positions: block/inline math (`$...$`, `$$...$$`), inline code, fenced code blocks (including mermaid's `B{决策}` rhombus), JSX props. Unsafe: prose. Escape with `\{`.
@@ -102,9 +154,11 @@ See `DEPENDENCIES.md`. Short version:
 ## Ignored paths worth knowing
 
 - `docs/local/` — operator notes (VPS IP, RUNBOOK). Author can read it, never commit anything from there.
-- `needtosubmit/*` (README excepted) — draft drop-zone for `.md` → `.mdx` auto-publish flow. Drafts here get moved under `src/content/posts/` when published.
+- `docs/handoff/` — session-state written by the handoff plugin, analogous to docs/local/. Don't commit.
+- `needtosubmit/*` (README excepted) — draft drop-zone for `.md` → `.mdx` auto-publish flow. Drafts here get moved under `src/content/posts/` when published; the originals go to `needtosubmit/.archive/` (also gitignored).
 - `.codex` — Codex plugin workspace marker.
-- `public/fonts/raw/` — intermediate font build artifacts.
+
+Tracked-but-not-shipped: `fonts-source/` is committed (so subset-fonts is reproducible from a clean checkout) but lives outside `public/` so its multi-MB woff2 / TTF sources never end up in `dist/`.
 
 ## Deploy
 
@@ -120,4 +174,7 @@ Conventional commits with a long body. Every commit co-authored with Claude Opus
 
 ## Spec compliance
 
-`khalilgao-blog-spec.md` is the source of truth. If something in code disagrees with spec, deviations are recorded in commit messages (e.g. the font subsetting commit explains why NotoSerifSC is ~1MB instead of the spec's 500KB target). Before changing an intentional deviation, check git log for the reasoning commit.
+`khalilgao-blog-spec.md` is the source of truth. If something in code disagrees with spec, deviations are recorded in commit messages. Before changing an intentional deviation, check git log for the reasoning commit. Examples of deviations and their resolutions / open status:
+
+- NotoSerifSC font weight — spec target was 500 KB total. Initial release shipped ~2.1 MB across two weights; the `perf(fonts)` commit (subset-fonts pipeline) brought it to ~360 KB total, comfortably under spec.
+- HTTP/3 + Brotli in nginx — spec wanted both. Disabled in `deploy/nginx.conf` because Debian 12's nginx-extras is 1.22 (pre-QUIC) and there's no brotli module in the main repo. Re-enable paths documented inline in the nginx config.
