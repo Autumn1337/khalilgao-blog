@@ -33,7 +33,7 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
   <article class="post">
     <div class="post-layout" data-has-toc={showToc ? 'true' : 'false'}>
       {showToc && (
-        <aside class="post-toc-slot" aria-label="文章目录">
+        <aside class="post-toc-slot">
           <TOC headings={tocHeadings} />
         </aside>
       )}
@@ -45,9 +45,9 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
         </header>
 
         {showToc && (
-          <details class="post-toc-mobile" aria-label="文章目录（移动端）">
+          <details class="post-toc-mobile">
             <summary>目录</summary>
-            <TOC headings={tocHeadings} hideLabel />
+            <TOC headings={tocHeadings} hideLabel ariaLabel="文章目录（移动端）" />
           </details>
         )}
 

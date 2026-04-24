@@ -6,14 +6,23 @@ export interface Props {
   /** Skip the "目录" label row (useful when the parent container already
       carries its own label, e.g. the mobile `<details><summary>目录`). */
   hideLabel?: boolean;
+  /** Override the landmark aria-label. Default "文章目录". Used to
+      disambiguate the desktop sidebar TOC from the mobile <details>
+      TOC when both exist in the DOM at the same time. */
+  ariaLabel?: string;
 }
 
-const { headings, label = '目录', hideLabel = false } = Astro.props;
+const {
+  headings,
+  label = '目录',
+  hideLabel = false,
+  ariaLabel = '文章目录',
+} = Astro.props;
 const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {items.length > 0 && (
-  <nav class="toc" aria-label="文章目录">
+  <nav class="toc" aria-label={ariaLabel}>
     {!hideLabel && <p class="toc__label">{label}</p>}
     <ol class="toc__list">
       {items.map((h) => (
