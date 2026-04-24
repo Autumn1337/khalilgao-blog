@@ -32,8 +32,11 @@ pnpm-debug.log*
 # Astro
 .astro/
 
-# font build artifacts
-public/fonts/raw/
+# Font subset source (fonts-source/) holds the pre-subset woff2 and
+# the TTF copies used at build time by the OG-image route. It's
+# tracked in git so `npm run subset-fonts` reproduces from a clean
+# checkout — deliberately outside public/ so these multi-MB sources
+# never ship to dist/.
 
 # Codex plugin workspace marker
 .codex
