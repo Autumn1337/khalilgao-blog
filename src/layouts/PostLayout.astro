@@ -102,7 +102,7 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
 
 <style>
   .post {
-    padding: 2.5rem 0 3.5rem;
+    padding-block: 2.5rem 3.5rem;
   }
 
   /* Narrow screens: single column, no TOC sidebar. */
@@ -299,7 +299,7 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
   }
 
   @media (max-width: 640px) {
-    .post { padding: 1.5rem 0 2rem; }
+    .post { padding-block: 1.5rem 2rem; }
     .post-head { margin-bottom: 1.5rem; }
     .post-prev-next { grid-template-columns: 1fr; }
     .pn--next { text-align: left; }
