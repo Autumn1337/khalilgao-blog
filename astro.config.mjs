@@ -33,6 +33,39 @@ function remarkMermaid() {
   };
 }
 
+/**
+ * Wrap every <table> in <div class="table-wrap"> at the hast level so
+ * wide tables scroll inside themselves on narrow viewports instead of
+ * pushing the whole page horizontally. CSS in typography.css gives the
+ * wrapper `overflow-x: auto`.
+ *
+ * Runs at the rehype stage because that's where tables exist as real
+ * element nodes — mdast tables are higher-level and don't resolve
+ * inline HTML the same way.
+ */
+function rehypeWrapTables() {
+  return (tree) => {
+    visit(tree, 'element', (node, index, parent) => {
+      if (node.tagName !== 'table' || index == null || !parent) return;
+      // Don't re-wrap if a previous pass already did.
+      if (
+        parent.type === 'element' &&
+        parent.tagName === 'div' &&
+        Array.isArray(parent.properties?.className) &&
+        parent.properties.className.includes('table-wrap')
+      ) {
+        return;
+      }
+      parent.children[index] = {
+        type: 'element',
+        tagName: 'div',
+        properties: { className: ['table-wrap'] },
+        children: [node],
+      };
+    });
+  };
+}
+
 export default defineConfig({
   site: 'https://khalilgao.com',
   trailingSlash: 'always',
@@ -50,7 +83,7 @@ export default defineConfig({
   ],
   markdown: {
     remarkPlugins: [remarkMath, remarkPangu, remarkMermaid],
-    rehypePlugins: [rehypeKatex],
+    rehypePlugins: [rehypeKatex, rehypeWrapTables],
     shikiConfig: {
       themes: {
         light: 'github-light',

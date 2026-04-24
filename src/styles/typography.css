@@ -185,7 +185,22 @@
 
 /* UI font + tight rules — tech tables mostly hold numbers, keywords
    and CLI fragments, where a sans metrics-family aligns more cleanly
-   than the serif body face. Header rule solid, body rules faint. */
+   than the serif body face. Header rule solid, body rules faint.
+   A rehype plugin (astro.config.mjs → rehypeWrapTables) wraps every
+   <table> in <div class="table-wrap"> so the wrapper scrolls on narrow
+   viewports instead of pushing the whole page horizontally. */
+
+.prose .table-wrap {
+  margin: 1.75em 0;
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.prose .table-wrap > table {
+  margin: 0;
+}
 
 .prose table {
   width: 100%;

@@ -44,6 +44,13 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
           <PostMeta post={post} readingTime={readingTime} showTags />
         </header>
 
+        {showToc && (
+          <details class="post-toc-mobile" aria-label="文章目录（移动端）">
+            <summary>目录</summary>
+            <TOC headings={tocHeadings} hideLabel />
+          </details>
+        )}
+
         <div class="post-body prose">
           <slot />
         </div>
@@ -242,6 +249,53 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
   }
   @media (max-width: 1099px) {
     .post-toc-slot { display: none; }
+  }
+
+  /* Mobile / tablet TOC — shows the same heading list as the desktop
+     sidebar but collapses into a <details> block at the top of the
+     article so narrow viewports still have navigation for long posts.
+     Hidden on wide screens where the sticky sidebar takes over. */
+  .post-toc-mobile {
+    max-width: var(--w-prose);
+    margin: 0 auto 2rem;
+    padding: 0.55em 1em 0.55em 1em;
+    border: 0.5px solid var(--border);
+    border-radius: var(--r-btn);
+    background: var(--bg);
+    font-family: var(--font-ui);
+  }
+  .post-toc-mobile > summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.2em 0;
+    user-select: none;
+  }
+  /* Hide native disclosure triangles across browsers. */
+  .post-toc-mobile > summary::-webkit-details-marker { display: none; }
+  .post-toc-mobile > summary::marker { content: ''; }
+  .post-toc-mobile > summary::before {
+    content: '▸';
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.2em;
+    color: var(--text-faint);
+    transition: transform 150ms ease;
+  }
+  .post-toc-mobile[open] > summary::before {
+    transform: rotate(90deg);
+  }
+  .post-toc-mobile > :global(.toc) {
+    margin-top: 0.6em;
+    padding-top: 0.4em;
+    border-top: 0.5px solid var(--border-faint);
+  }
+  @media (min-width: 1100px) {
+    .post-toc-mobile { display: none; }
   }
 
   @media (max-width: 640px) {

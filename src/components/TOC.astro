@@ -3,15 +3,18 @@ export interface Props {
   headings: Array<{ depth: number; text: string; slug: string }>;
   /** Override label, default "目录". */
   label?: string;
+  /** Skip the "目录" label row (useful when the parent container already
+      carries its own label, e.g. the mobile `<details><summary>目录`). */
+  hideLabel?: boolean;
 }
 
-const { headings, label = '目录' } = Astro.props;
+const { headings, label = '目录', hideLabel = false } = Astro.props;
 const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
 {items.length > 0 && (
   <nav class="toc" aria-label="文章目录">
-    <p class="toc__label">{label}</p>
+    {!hideLabel && <p class="toc__label">{label}</p>}
     <ol class="toc__list">
       {items.map((h) => (
         <li class="toc__item" data-depth={h.depth}>
@@ -76,14 +79,20 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
     const items = Array.from(document.querySelectorAll<HTMLElement>('.toc__item'));
     if (items.length === 0) return;
 
-    const byId = new Map<string, HTMLElement>();
+    // A post may render the TOC twice — once as the desktop sidebar and
+    // once as the mobile <details> collapsible. Both point at the same
+    // heading slugs, so the map is slug → all matching list items, and
+    // is-active gets applied to every instance.
+    const bySlug = new Map<string, HTMLElement[]>();
     for (const item of items) {
       const link = item.querySelector<HTMLAnchorElement>('a[data-toc-link]');
-      if (link?.dataset.tocLink) {
-        byId.set(link.dataset.tocLink, item);
-      }
+      const slug = link?.dataset.tocLink;
+      if (!slug) continue;
+      const bucket = bySlug.get(slug);
+      if (bucket) bucket.push(item);
+      else bySlug.set(slug, [item]);
     }
-    const targets = Array.from(byId.keys())
+    const targets = Array.from(bySlug.keys())
       .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => !!el);
     if (targets.length === 0) return;
@@ -93,8 +102,8 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
     const setActive = (id: string | null) => {
       if (id === activeId) return;
-      if (activeId) byId.get(activeId)?.classList.remove('is-active');
-      if (id) byId.get(id)?.classList.add('is-active');
+      if (activeId) bySlug.get(activeId)?.forEach((el) => el.classList.remove('is-active'));
+      if (id) bySlug.get(id)?.forEach((el) => el.classList.add('is-active'));
       activeId = id;
     };
 

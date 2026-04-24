@@ -80,20 +80,27 @@
     -apple-system, BlinkMacSystemFont, "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
 
-  /* type scale (§3.3) */
-  --fs-body: 17px;
+  /* type scale (§3.3)
+   *
+   * clamp(min, preferred, max) lets prose text flow smoothly between
+   * phone (≈360px) and desktop (≥1100px) instead of jumping at a hard
+   * media-query step. Linear interpolation hits the min value near 360px
+   * and reaches the max around 1100px, then holds flat. Small UI tokens
+   * (meta / tag / code / caption) stay fixed — they're already tiny,
+   * and scaling them further hurts legibility on phones. */
+  --fs-body: clamp(15.5px, 14.5px + 0.3vw, 17px);
   --lh-body: 1.85;
-  --fs-h1: 30px;
+  --fs-h1: clamp(24px, 21px + 0.82vw, 30px);
   --lh-h1: 1.3;
-  --fs-h2: 22px;
+  --fs-h2: clamp(19px, 17.55px + 0.41vw, 22px);
   --lh-h2: 1.4;
-  --fs-h3: 17px;
+  --fs-h3: clamp(15.5px, 14.5px + 0.3vw, 17px);
   --lh-h3: 1.5;
-  --fs-h4: 17px;
+  --fs-h4: clamp(15.5px, 14.5px + 0.3vw, 17px);
   --lh-h4: 1.5;
-  --fs-card: 20px;
+  --fs-card: clamp(17px, 15.2px + 0.5vw, 20px);
   --lh-card: 1.35;
-  --fs-excerpt: 16px;
+  --fs-excerpt: clamp(14.5px, 13.77px + 0.22vw, 16px);
   --lh-excerpt: 1.75;
   --fs-meta: 12px;
   --fs-tag: 11px;
@@ -152,11 +159,17 @@
   --line-hl: rgba(255, 255, 255, 0.05);
 }
 
-/* ---------- Mobile (§3.4) ---------- */
+/* ---------- Mobile (§3.4) ----------
+ *
+ * Font sizes scale fluidly via clamp() above, so no font-size override
+ * is needed here. --pad-x is the one that still wants a step — horizontal
+ * page padding reads as a spatial decision (how much room around content),
+ * not a continuous dimension, and a sudden step at 640px matches the
+ * visual break between "phone with tight margins" and "desktop with
+ * breathing room". */
 
 @media (max-width: 640px) {
   :root {
     --pad-x: 1.25rem;
-    --fs-h1: 26px;
   }
 }
