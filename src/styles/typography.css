@@ -1,0 +1,235 @@
+/* ----------------------------------------------------------------------
+ * Prose typography
+ *
+ * Scoped to .prose so it doesn't leak into navigation chrome, cards,
+ * or other UI surfaces. Sizes, line-heights and margins mirror §3.3–3.5
+ * of the spec.
+ * -------------------------------------------------------------------- */
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+  max-width: var(--w-prose);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+  /* prevent CJK kerning jank on long paragraphs */
+  text-spacing-trim: space-all;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+/* paragraphs ------------------------------------------------- */
+
+.prose p {
+  margin: var(--gap-para) 0;
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+/* headings --------------------------------------------------- */
+
+.prose h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-heading);
+  margin: 0 0 0.8em;
+  letter-spacing: -0.01em;
+}
+
+.prose h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-heading);
+  margin: var(--gap-h2-top) 0 var(--gap-h2-bot);
+}
+
+.prose h3 {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--fw-heading);
+  margin: var(--gap-h3-top) 0 var(--gap-h3-bot);
+  padding-bottom: 0.3em;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.prose h4 {
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  font-weight: var(--fw-heading);
+  margin: 1.4em 0 0.4em;
+}
+
+/* links ------------------------------------------------------ */
+
+.prose a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 3px;
+  transition: var(--t-link);
+}
+
+.prose a:hover {
+  color: var(--link-hover);
+  text-decoration-thickness: 1px;
+}
+
+/* inline emphasis ------------------------------------------- */
+
+.prose strong {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+/* lists ------------------------------------------------------ */
+
+.prose ul,
+.prose ol {
+  margin: var(--gap-para) 0;
+  padding-left: 1.6em;
+}
+
+.prose li {
+  margin: 0.35em 0;
+}
+
+.prose li::marker {
+  color: var(--text-faint);
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin: 0.2em 0;
+}
+
+/* blockquote (§6.6) ----------------------------------------- */
+
+.prose blockquote {
+  margin: 1.75em 0;
+  padding: 0.25em 1.2em;
+  border-left: 2px solid var(--border);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.prose blockquote p {
+  margin: 0.5em 0;
+}
+
+/* horizontal rule -------------------------------------------- */
+
+.prose hr {
+  border: 0;
+  border-top: 0.5px solid var(--border);
+  margin: 2.5em auto;
+  max-width: 6em;
+}
+
+/* figures ---------------------------------------------------- */
+
+.prose figure {
+  margin: var(--gap-figure) auto;
+  text-align: center;
+}
+
+.prose figcaption {
+  font-family: var(--font-ui);
+  font-size: var(--fs-caption);
+  font-style: italic;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.6em;
+  line-height: 1.5;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-inline: auto;
+  border-radius: var(--r-img);
+  border: 0.5px solid var(--border);
+}
+
+/* dark-mode: cushion light screenshots so they don't bleed into bg */
+:root[data-theme="dark"] .prose img:not(.no-cushion) {
+  padding: 8px;
+  background: #ffffff;
+}
+
+/* inline code ------------------------------------------------ */
+
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.12em 0.4em;
+  background: var(--code-bg);
+  border-radius: 3px;
+  border: 0.5px solid var(--border-faint);
+  white-space: nowrap;
+}
+
+/* tables ----------------------------------------------------- */
+
+.prose table {
+  width: 100%;
+  margin: 1.75em 0;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.prose th,
+.prose td {
+  border-bottom: 0.5px solid var(--border);
+  padding: 0.5em 0.8em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  font-weight: 500;
+  border-bottom-width: 1px;
+}
+
+/* footnotes (GFM) ------------------------------------------- */
+
+.prose .footnotes {
+  margin-top: 3em;
+  padding-top: 1.5em;
+  border-top: 0.5px solid var(--border);
+  font-size: 0.92em;
+  color: var(--text-muted);
+}
+
+.prose .footnotes ol {
+  padding-left: 1.4em;
+}
+
+.prose sup a,
+.prose a[data-footnote-ref] {
+  text-decoration: none;
+  font-family: var(--font-ui);
+  font-size: 0.75em;
+  padding: 0 0.1em;
+}
+
+/* KaTeX overrides — let maths inherit prose colour ---------- */
+
+.prose .katex {
+  font-size: 1.05em;
+  color: var(--text);
+}
+
+.prose .katex-display {
+  margin: 1.2em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

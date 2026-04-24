@@ -1,0 +1,138 @@
+/* ----------------------------------------------------------------------
+ * Code blocks (Shiki dual-theme)
+ *
+ * Shiki is configured with `themes: { light, dark }` which emits inline
+ * style="color:#light;--shiki-dark:#dark" on every span. The rules
+ * below pick whichever colour matches :root[data-theme=*].
+ *
+ * Wrapping structure produced by the <Code>/Markdown processor +
+ * transformer in stage 6:
+ *
+ *   <figure class="code-block" data-filename="foo.cpp">
+ *     <button class="code-copy-btn">...</button>
+ *     <pre class="astro-code"><code>...</code></pre>
+ *   </figure>
+ * -------------------------------------------------------------------- */
+
+.prose .code-block {
+  position: relative;
+  margin: var(--gap-code) 0;
+}
+
+.prose .code-block[data-filename]::before {
+  content: attr(data-filename);
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 0.5em 1em;
+  background: var(--code-bg);
+  border: 0.5px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r-code) var(--r-code) 0 0;
+}
+
+.prose .code-block[data-filename] pre.astro-code {
+  border-radius: 0 0 var(--r-code) var(--r-code);
+}
+
+.prose pre.astro-code {
+  margin: var(--gap-code) 0;
+  padding: 1em 1.1em;
+  background: var(--code-bg) !important;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-code);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  line-height: var(--lh-code);
+  /* Scrollbar appears only when overflow */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.prose .code-block pre.astro-code {
+  margin: 0;
+}
+
+.prose pre.astro-code code {
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  white-space: inherit;
+}
+
+/* Shiki dual-theme colour switch ---------------------------- */
+
+:root[data-theme="light"] .astro-code,
+:root[data-theme="light"] .astro-code span {
+  color: var(--shiki-light) !important;
+  font-style: var(--shiki-light-font-style) !important;
+  font-weight: var(--shiki-light-font-weight) !important;
+  text-decoration: var(--shiki-light-text-decoration) !important;
+}
+
+:root[data-theme="dark"] .astro-code,
+:root[data-theme="dark"] .astro-code span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* Line structure (shiki emits one span.line per source line) */
+
+.astro-code code > .line {
+  display: inline-block;
+  min-width: 100%;
+  padding-inline: 1.1em;
+  margin-inline: -1.1em;
+}
+
+.astro-code code > .line.highlighted {
+  background-color: var(--line-hl);
+  box-shadow: inset 2px 0 0 var(--text-muted);
+}
+
+/* Copy button (stage 6 wires the JS) ------------------------ */
+
+.prose .code-copy-btn {
+  position: absolute;
+  top: 0.45em;
+  right: 0.55em;
+  padding: 0.3em 0.55em;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-btn);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.prose .code-block:hover .code-copy-btn,
+.prose .code-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.prose .code-block[data-filename] .code-copy-btn {
+  top: 0.3em;
+}
+
+.prose .code-copy-btn[data-copied="true"] {
+  color: var(--text);
+  opacity: 1;
+}
+
+.prose .code-copy-btn svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}

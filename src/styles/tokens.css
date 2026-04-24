@@ -1,0 +1,162 @@
+/* ----------------------------------------------------------------------
+ * Design tokens + @font-face declarations
+ *
+ * All colour/size/spacing decisions live here as CSS custom properties.
+ * Components consume them via var(--*) — never hardcode a value.
+ * -------------------------------------------------------------------- */
+
+/* ---------- @font-face ---------- */
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("/fonts/Newsreader-var.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("/fonts/Newsreader-400italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-var.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+}
+
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+}
+
+/* ---------- Light theme (default) ---------- */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* colours */
+  --bg: #fdfdfc;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --text-faint: #9a9a9a;
+  --border: #e5e2dc;
+  --border-faint: #efece6;
+  --code-bg: #f5f3ef;
+  --link: #0066cc;
+  --link-hover: #003d7a;
+  --selection: #c8dcf0;
+
+  /* line highlight in fenced code blocks */
+  --line-hl: rgba(255, 222, 82, 0.18);
+
+  /* font stacks */
+  --font-serif:
+    "Newsreader", "Noto Serif SC", "Source Han Serif SC",
+    "Songti SC", "STSong", "SimSun", Georgia, serif;
+  --font-mono:
+    "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+
+  /* type scale (§3.3) */
+  --fs-body: 17px;
+  --lh-body: 1.85;
+  --fs-h1: 30px;
+  --lh-h1: 1.3;
+  --fs-h2: 22px;
+  --lh-h2: 1.4;
+  --fs-h3: 17px;
+  --lh-h3: 1.5;
+  --fs-h4: 17px;
+  --lh-h4: 1.5;
+  --fs-card: 20px;
+  --lh-card: 1.35;
+  --fs-excerpt: 16px;
+  --lh-excerpt: 1.75;
+  --fs-meta: 12px;
+  --fs-tag: 11px;
+  --fs-code: 13.5px;
+  --lh-code: 1.7;
+  --fs-caption: 12px;
+  --fw-body: 400;
+  --fw-heading: 500;
+
+  /* widths (§3.4) */
+  --w-prose: 680px;
+  --w-wide: 960px;
+  --w-full: 1100px;
+
+  /* horizontal page padding */
+  --pad-x: 2rem;
+
+  /* vertical rhythm (§3.5) */
+  --gap-para: 1.25em;
+  --gap-h2-top: 2.2em;
+  --gap-h2-bot: 0.8em;
+  --gap-h3-top: 1.8em;
+  --gap-h3-bot: 0.6em;
+  --gap-code: 1.75em;
+  --gap-figure: 2em;
+  --gap-section: 2.25em;
+
+  /* radii (§3.6) */
+  --r-code: 5px;
+  --r-img: 4px;
+  --r-tag: 3px;
+  --r-btn: 4px;
+
+  /* transitions (§3.7) */
+  --t-theme: background-color 200ms ease, color 200ms ease,
+             border-color 200ms ease;
+  --t-link: color 120ms ease;
+}
+
+/* ---------- Dark theme ---------- */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #1a1a1a;
+  --text: #e8e6e3;
+  --text-muted: #9a9894;
+  --text-faint: #6a6866;
+  --border: #2e2e2c;
+  --border-faint: #262624;
+  --code-bg: #232321;
+  --link: #66a8e0;
+  --link-hover: #99c4ea;
+  --selection: #2a4a6b;
+
+  --line-hl: rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- Mobile (§3.4) ---------- */
+
+@media (max-width: 640px) {
+  :root {
+    --pad-x: 1.25rem;
+    --fs-h1: 26px;
+  }
+}
