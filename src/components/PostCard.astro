@@ -15,6 +15,7 @@ function excerpt(body: string | undefined, fallback?: string): string {
   if (!body) return '';
   const plain = body
     .replace(/^---[\s\S]*?---\n/, '')
+    .replace(/^\s*(?:import|export)\s+[\s\S]*?;\s*$/gm, '')
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`[^`]+`/g, '')
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')

@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { fmtISODate } from '../lib/date-format';
+import { tagUrl } from '../lib/tag-url';
 
 export interface Props {
   post: CollectionEntry<'posts'>;
@@ -33,7 +34,7 @@ const { pubDate, updatedDate, tags } = post.data;
       <span class="sep" aria-hidden="true">·</span>
       <span class="post-meta__tags">
         {tags.map((t) => (
-          <a href={`/tags/${t}/`} class="post-meta__tag">#{t}</a>
+          <a href={tagUrl(t)} class="post-meta__tag">#{t}</a>
         ))}
       </span>
     </>

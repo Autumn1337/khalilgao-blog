@@ -61,5 +61,14 @@ export default defineConfig({
     ssr: {
       noExternal: ['medium-zoom'],
     },
+    // WSL + NTFS (/mnt/e) doesn't deliver inotify events to the Vite
+    // watcher, so HMR never fires on file edits. Polling is the only
+    // reliable way to pick up changes across that filesystem boundary.
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
+    },
   },
 });

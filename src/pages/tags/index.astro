@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { tagUrl } from '../../lib/tag-url';
 
 const all = await getCollection('posts', ({ data }) =>
   import.meta.env.PROD ? !data.draft : true,
@@ -22,7 +23,7 @@ const tags = [...counts.entries()].sort(
     ) : (
       <div class="tag-cloud">
         {tags.map(([name, n]) => (
-          <a href={`/tags/${name}/`} class="tag-item">
+          <a href={tagUrl(name)} class="tag-item">
             <span class="tag-item__name">{name}</span>
             <span class="tag-item__count">{n}</span>
           </a>

@@ -18,7 +18,9 @@ export interface Props {
 
 const { post, headings, prev = null, next = null, readingTime } = Astro.props;
 const d = post.data;
-const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const tocHeadings = headings.filter(
+  (h) => (h.depth === 2 || h.depth === 3) && h.slug !== 'footnote-label',
+);
 const showToc = d.toc !== false && tocHeadings.length > 0;
 ---
 
@@ -103,27 +105,49 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
     padding-inline: var(--pad-x);
   }
 
-  /* Three-column grid so WideFigure / full-bleed children can break out
-     of the 680px prose column without negative-margin hacks. */
-  .post-body {
-    display: grid;
-    grid-template-columns:
-      [full-start] minmax(0, 1fr)
-      [wide-start] minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2))
-      [prose-start] minmax(0, var(--w-prose)) [prose-end]
-      minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2)) [wide-end]
-      minmax(0, 1fr) [full-end];
-  }
+  /* Default: single-column prose. Children center themselves within
+     the 680px prose measure; WideFigure/full-bleed grow beyond it via
+     their own max-width. This shape works at every viewport AND inside
+     the TOC sidebar layout where horizontal room is scarce. */
   .post-body > * {
-    grid-column: prose;
-    min-width: 0;
+    max-width: var(--w-prose);
+    margin-inline: auto;
   }
   .post-body > :global(.wide-figure),
   .post-body > :global(figure.wide) {
-    grid-column: wide;
+    max-width: var(--w-wide);
   }
   .post-body > :global(.full-bleed) {
-    grid-column: full;
+    max-width: none;
+  }
+
+  /* No-TOC pages on wide screens get the fancy 3-column breakout grid
+     where WideFigure really hits 960px regardless of the prose column.
+     TOC pages stay in the simple single-column flow above — there just
+     isn't room for both a 200px sidebar AND a 960px breakout. */
+  @media (min-width: 1100px) {
+    .post-layout:not([data-has-toc='true']) .post-body {
+      display: grid;
+      grid-template-columns:
+        [full-start] minmax(0, 1fr)
+        [wide-start] minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2))
+        [prose-start] minmax(0, var(--w-prose)) [prose-end]
+        minmax(0, calc((var(--w-wide) - var(--w-prose)) / 2)) [wide-end]
+        minmax(0, 1fr) [full-end];
+    }
+    .post-layout:not([data-has-toc='true']) .post-body > * {
+      grid-column: prose;
+      max-width: none;
+      margin-inline: 0;
+      min-width: 0;
+    }
+    .post-layout:not([data-has-toc='true']) .post-body > :global(.wide-figure),
+    .post-layout:not([data-has-toc='true']) .post-body > :global(figure.wide) {
+      grid-column: wide;
+    }
+    .post-layout:not([data-has-toc='true']) .post-body > :global(.full-bleed) {
+      grid-column: full;
+    }
   }
 
   .post-head,

@@ -1,4 +1,6 @@
 ---
+import { tagUrl } from '../lib/tag-url';
+
 export interface Props {
   tag: string;
   size?: 'default' | 'small';
@@ -8,7 +10,7 @@ const { tag, size = 'default', withHash = false } = Astro.props;
 ---
 
 <a
-  href={`/tags/${tag}/`}
+  href={tagUrl(tag)}
   class:list={['tag', { 'tag--small': size === 'small' }]}
 >{withHash && '#'}{tag}</a>
 

@@ -34,3 +34,6 @@ pnpm-debug.log*
 
 # font build artifacts
 public/fonts/raw/
+
+# Codex plugin workspace marker
+.codex

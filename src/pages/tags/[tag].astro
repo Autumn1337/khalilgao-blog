@@ -2,7 +2,8 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { postUrl } from '../../lib/post-url';
-import { fmtMonthDay } from '../../lib/date-format';
+import { fmtMonthDay, fmtYear } from '../../lib/date-format';
+import { tagSlug } from '../../lib/tag-url';
 
 type Post = CollectionEntry<'posts'>;
 
@@ -10,14 +11,24 @@ export async function getStaticPaths() {
   const all = await getCollection('posts', ({ data }) =>
     import.meta.env.PROD ? !data.draft : true,
   );
-  const tags = new Set<string>();
-  for (const p of all) for (const t of p.data.tags) tags.add(t);
-  return [...tags].map((tag) => ({
-    params: { tag },
-    props: {
-      tag,
-      posts: all.filter((p) => p.data.tags.includes(tag)),
-    },
+  const routes = new Map<string, { tag: string; posts: Post[] }>();
+  for (const post of all) {
+    for (const tag of post.data.tags) {
+      const slug = tagSlug(tag);
+      const route = routes.get(slug);
+      if (route && route.tag !== tag) {
+        throw new Error(
+          `Tag slug collision: "${route.tag}" and "${tag}" both map to "${slug}".`,
+        );
+      }
+      if (route) route.posts.push(post);
+      else routes.set(slug, { tag, posts: [post] });
+    }
+  }
+
+  return [...routes.entries()].map(([slug, route]) => ({
+    params: { tag: slug },
+    props: route,
   }));
 }
 
@@ -27,7 +38,7 @@ const sorted = [...posts].sort(
 );
 const byYear = new Map<number, Post[]>();
 for (const p of sorted) {
-  const y = p.data.pubDate.getFullYear();
+  const y = fmtYear(p.data.pubDate);
   const bucket = byYear.get(y);
   if (bucket) bucket.push(p);
   else byYear.set(y, [p]);

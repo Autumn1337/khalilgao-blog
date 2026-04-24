@@ -2,7 +2,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { postUrl } from '../lib/post-url';
-import { fmtMonthDay } from '../lib/date-format';
+import { fmtMonthDay, fmtYear } from '../lib/date-format';
 
 const all = await getCollection('posts', ({ data }) =>
   import.meta.env.PROD ? !data.draft : true,
@@ -11,7 +11,7 @@ const all = await getCollection('posts', ({ data }) =>
 type Post = CollectionEntry<'posts'>;
 const byYear = new Map<number, Post[]>();
 for (const p of all) {
-  const y = p.data.pubDate.getFullYear();
+  const y = fmtYear(p.data.pubDate);
   const bucket = byYear.get(y);
   if (bucket) bucket.push(p);
   else byYear.set(y, [p]);
