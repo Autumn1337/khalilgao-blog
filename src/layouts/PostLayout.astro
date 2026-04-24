@@ -5,7 +5,7 @@ import Tag from '../components/Tag.astro';
 import PostMeta from '../components/PostMeta.astro';
 import Mermaid from '../components/Mermaid.astro';
 import { fmtISODate } from '../lib/date-format';
-import { postUrl } from '../lib/post-url';
+import { postUrl, cleanSlug } from '../lib/post-url';
 import type { CollectionEntry } from 'astro:content';
 
 export interface Props {
@@ -28,6 +28,7 @@ const showToc = d.toc !== false && tocHeadings.length > 0;
   title={d.title}
   description={d.description}
   lang={d.lang}
+  ogImage={`/og/${cleanSlug(post)}.png`}
   article={{ pubDate: d.pubDate, updatedDate: d.updatedDate, tags: d.tags }}
 >
   <article class="post">
