@@ -1,0 +1,73 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import PostMeta from './PostMeta.astro';
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  readingTime?: number;
+}
+
+const { post, readingTime } = Astro.props;
+
+function excerpt(body: string | undefined, fallback?: string): string {
+  if (fallback) return fallback;
+  if (!body) return '';
+  const plain = body
+    .replace(/^---[\s\S]*?---\n/, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]+`/g, '')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/^\s*#+\s+.*$/gm, '')
+    .replace(/^\s*[-*>]\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain.slice(0, 140) + (plain.length > 140 ? '…' : '');
+}
+
+const summary = excerpt(post.body, post.data.description);
+---
+
+<article class="post-card">
+  <h2 class="post-card__title">
+    <a href={`/posts/${post.slug}/`}>{post.data.title}</a>
+  </h2>
+  <PostMeta post={post} readingTime={readingTime} />
+  {summary && <p class="post-card__excerpt">{summary}</p>}
+</article>
+
+<style>
+  .post-card {
+    padding-bottom: var(--gap-section);
+    margin-bottom: var(--gap-section);
+    border-bottom: 0.5px solid var(--border-faint);
+  }
+  .post-card:last-of-type {
+    border-bottom: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  .post-card__title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-card);
+    line-height: var(--lh-card);
+    font-weight: var(--fw-heading);
+    margin: 0 0 0.35em;
+    letter-spacing: -0.005em;
+  }
+  .post-card__title a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .post-card__title a:hover {
+    color: var(--link);
+  }
+  .post-card__excerpt {
+    font-family: var(--font-serif);
+    font-size: var(--fs-excerpt);
+    line-height: var(--lh-excerpt);
+    color: var(--text-muted);
+    margin: 0.6em 0 0;
+  }
+</style>

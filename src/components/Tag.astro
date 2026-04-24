@@ -1,0 +1,36 @@
+---
+export interface Props {
+  tag: string;
+  size?: 'default' | 'small';
+  withHash?: boolean;
+}
+const { tag, size = 'default', withHash = false } = Astro.props;
+---
+
+<a
+  href={`/tags/${tag}/`}
+  class:list={['tag', { 'tag--small': size === 'small' }]}
+>{withHash && '#'}{tag}</a>
+
+<style>
+  .tag {
+    display: inline-block;
+    font-family: var(--font-ui);
+    font-size: var(--fs-tag);
+    padding: 2px 8px;
+    background: var(--border-faint);
+    color: var(--text-muted);
+    border-radius: var(--r-tag);
+    text-decoration: none;
+    line-height: 1.5;
+    transition: var(--t-link), background-color 120ms ease;
+  }
+  .tag:hover {
+    color: var(--text);
+    background: var(--border);
+  }
+  .tag--small {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+</style>

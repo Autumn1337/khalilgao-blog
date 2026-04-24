@@ -1,0 +1,86 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+export interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  caption?: string;
+  /**
+   * Maximum rendered width in px. For <Figure> (default 680) and <WideFigure>
+   * (960) the same component is used — a wider value just changes the
+   * figure's size attribute. The *grid* column is chosen by the `wide`
+   * class, set by <WideFigure>.
+   */
+  width?: number;
+  height?: number;
+  /** When true, skip the 8px dark-mode white cushion (e.g. for photos). */
+  noCushion?: boolean;
+  /** Internal flag set by <WideFigure>. Don't pass by hand. */
+  wide?: boolean;
+}
+
+const {
+  src,
+  alt,
+  caption,
+  width = 680,
+  height,
+  noCushion = false,
+  wide = false,
+} = Astro.props;
+
+const isString = typeof src === 'string';
+---
+
+<figure class:list={['figure', { wide: wide, 'wide-figure': wide }]}>
+  {isString ? (
+    <img
+      src={src as string}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      class:list={{ 'no-cushion': noCushion }}
+    />
+  ) : (
+    <Image
+      src={src as ImageMetadata}
+      alt={alt}
+      width={width}
+      height={height}
+      loading="lazy"
+      decoding="async"
+      class:list={{ 'no-cushion': noCushion }}
+    />
+  )}
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .figure {
+    margin: var(--gap-figure) auto;
+    text-align: center;
+  }
+  .figure img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-inline: auto;
+    border-radius: var(--r-img);
+    border: 0.5px solid var(--border);
+    cursor: zoom-in;
+  }
+  :root[data-theme="dark"] .figure img:not(.no-cushion) {
+    padding: 8px;
+    background: #ffffff;
+  }
+  .figure figcaption {
+    font-family: var(--font-ui);
+    font-size: var(--fs-caption);
+    font-style: italic;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.6em;
+    line-height: 1.5;
+  }
+</style>

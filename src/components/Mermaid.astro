@@ -1,0 +1,134 @@
+---
+/**
+ * Mermaid renderer — lazy client-side.
+ *
+ * The markdown pipeline turns ```mermaid code fences into
+ *   <pre class="mermaid" data-graph="...">src</pre>
+ * via the `rehypeMermaid` plugin in astro.config.mjs.
+ *
+ * This component ships only the client bootstrap:
+ *   - loads mermaid lib when the first block scrolls near viewport
+ *   - re-renders on theme-switch so light/dark diagrams stay readable
+ *
+ * Zero server render cost; included once in PostLayout so every article
+ * gets mermaid support without explicit import in the MDX.
+ */
+---
+
+<script>
+  (() => {
+    type Mermaid = typeof import('mermaid').default;
+    let mermaidPromise: Promise<Mermaid> | null = null;
+    let currentTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+
+    function configFor(theme: 'dark' | 'default') {
+      const css = getComputedStyle(document.documentElement);
+      const fg = css.getPropertyValue('--text').trim() || '#1a1a1a';
+      const bg = css.getPropertyValue('--bg').trim() || '#fdfdfc';
+      const border = css.getPropertyValue('--border').trim() || '#e5e2dc';
+      return {
+        startOnLoad: false,
+        securityLevel: 'strict' as const,
+        theme,
+        themeVariables: {
+          fontFamily: 'var(--font-ui), sans-serif',
+          primaryColor: bg,
+          primaryTextColor: fg,
+          primaryBorderColor: border,
+          lineColor: fg,
+          textColor: fg,
+          background: bg,
+        },
+      };
+    }
+
+    async function getMermaid(): Promise<Mermaid> {
+      if (!mermaidPromise) {
+        mermaidPromise = import('mermaid').then((m) => m.default);
+      }
+      const m = await mermaidPromise;
+      m.initialize(configFor(currentTheme as 'dark' | 'default'));
+      return m;
+    }
+
+    async function renderAll() {
+      const blocks = document.querySelectorAll<HTMLElement>(
+        '.mermaid:not([data-processed="true"])',
+      );
+      if (blocks.length === 0) return;
+      const m = await getMermaid();
+      for (const el of blocks) {
+        const src = el.dataset.graph ?? el.textContent ?? '';
+        try {
+          const id = 'mermaid-' + Math.random().toString(36).slice(2, 10);
+          const { svg } = await m.render(id, src);
+          el.innerHTML = svg;
+          el.dataset.processed = 'true';
+        } catch (err) {
+          console.warn('[Mermaid] render failed:', err);
+        }
+      }
+    }
+
+    async function rerenderAll() {
+      currentTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+      document.querySelectorAll<HTMLElement>('.mermaid').forEach((el) => {
+        // Restore the original source so the next render gets fresh SVG
+        const src = el.dataset.graph;
+        if (src !== undefined) {
+          el.innerHTML = '';
+          el.textContent = src;
+          delete el.dataset.processed;
+        }
+      });
+      await renderAll();
+    }
+
+    // Lazy-load: wait until the first mermaid block approaches viewport
+    const first = document.querySelector<HTMLElement>('.mermaid');
+    if (first) {
+      const io = new IntersectionObserver(
+        (entries, obs) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              renderAll();
+              obs.disconnect();
+              break;
+            }
+          }
+        },
+        { rootMargin: '200px' },
+      );
+      io.observe(first);
+    }
+
+    // React to theme changes
+    new MutationObserver(() => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+      if (next !== currentTheme) rerenderAll();
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+  })();
+</script>
+
+<style is:global>
+  .mermaid {
+    display: block;
+    text-align: center;
+    margin: var(--gap-figure) auto;
+    font-family: var(--font-ui);
+    color: var(--text);
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+  }
+</style>

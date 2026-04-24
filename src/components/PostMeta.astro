@@ -1,0 +1,65 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { fmtISODate } from '../lib/date-format';
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  readingTime?: number;
+  showTags?: boolean;
+}
+
+const { post, readingTime, showTags = true } = Astro.props;
+const { pubDate, updatedDate, tags } = post.data;
+---
+
+<p class="post-meta">
+  <time datetime={pubDate.toISOString()}>{fmtISODate(pubDate)}</time>
+  {readingTime !== undefined && (
+    <>
+      <span class="sep" aria-hidden="true">·</span>
+      <span>{readingTime} min read</span>
+    </>
+  )}
+  {updatedDate && (
+    <>
+      <span class="sep" aria-hidden="true">·</span>
+      <span>
+        更新于 <time datetime={updatedDate.toISOString()}>{fmtISODate(updatedDate)}</time>
+      </span>
+    </>
+  )}
+  {showTags && tags.length > 0 && (
+    <>
+      <span class="sep" aria-hidden="true">·</span>
+      <span class="post-meta__tags">
+        {tags.map((t) => (
+          <a href={`/tags/${t}/`} class="post-meta__tag">#{t}</a>
+        ))}
+      </span>
+    </>
+  )}
+</p>
+
+<style>
+  .post-meta {
+    font-family: var(--font-ui);
+    font-size: var(--fs-meta);
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .post-meta .sep {
+    margin: 0 0.5em;
+    color: var(--text-faint);
+  }
+  .post-meta__tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0 0.6em;
+  }
+  .post-meta__tag {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .post-meta__tag:hover { color: var(--text); }
+</style>

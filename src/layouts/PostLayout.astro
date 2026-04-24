@@ -1,5 +1,10 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import TOC from '../components/TOC.astro';
+import Tag from '../components/Tag.astro';
+import PostMeta from '../components/PostMeta.astro';
+import Mermaid from '../components/Mermaid.astro';
+import { fmtISODate } from '../lib/date-format';
 import type { CollectionEntry } from 'astro:content';
 
 export interface Props {
@@ -14,13 +19,6 @@ const { post, headings, prev = null, next = null, readingTime } = Astro.props;
 const d = post.data;
 const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const showToc = d.toc !== false && tocHeadings.length > 0;
-
-function fmtDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
-}
 ---
 
 <BaseLayout
@@ -33,47 +31,14 @@ function fmtDate(date: Date): string {
     <div class="post-layout" data-has-toc={showToc ? 'true' : 'false'}>
       {showToc && (
         <aside class="post-toc-slot" aria-label="文章目录">
-          <nav class="toc-fallback">
-            <p class="toc-fallback__label">目录</p>
-            <ol class="toc-fallback__list">
-              {tocHeadings.map((h) => (
-                <li data-depth={h.depth}>
-                  <a href={`#${h.slug}`}>{h.text}</a>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          <TOC headings={tocHeadings} />
         </aside>
       )}
 
       <div class="post-main">
         <header class="post-head">
           <h1 class="post-title">{d.title}</h1>
-          <p class="post-meta">
-            <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
-            {readingTime !== undefined && (
-              <>
-                <span class="sep" aria-hidden="true">·</span>
-                <span>{readingTime} min read</span>
-              </>
-            )}
-            {d.updatedDate && (
-              <>
-                <span class="sep" aria-hidden="true">·</span>
-                <span>更新于 <time datetime={d.updatedDate.toISOString()}>{fmtDate(d.updatedDate)}</time></span>
-              </>
-            )}
-            {d.tags.length > 0 && (
-              <>
-                <span class="sep" aria-hidden="true">·</span>
-                <span class="post-meta-tags">
-                  {d.tags.map((t) => (
-                    <a href={`/tags/${t}/`} class="post-meta-tag">{t}</a>
-                  ))}
-                </span>
-              </>
-            )}
-          </p>
+          <PostMeta post={post} readingTime={readingTime} showTags />
         </header>
 
         <div class="post-body prose">
@@ -84,12 +49,10 @@ function fmtDate(date: Date): string {
           <hr class="post-foot__rule" />
           {d.tags.length > 0 && (
             <p class="post-tags">
-              {d.tags.map((t) => (
-                <a href={`/tags/${t}/`} class="post-tag">{t}</a>
-              ))}
+              {d.tags.map((t) => <Tag tag={t} />)}
             </p>
           )}
-          <p class="post-author">Hewen Gao · {fmtDate(d.pubDate)}</p>
+          <p class="post-author">Hewen Gao · {fmtISODate(d.pubDate)}</p>
           {(prev || next) && (
             <nav class="post-prev-next" aria-label="相邻文章">
               {prev ? (
@@ -110,6 +73,21 @@ function fmtDate(date: Date): string {
       </div>
     </div>
   </article>
+
+  <Mermaid />
+
+  <script>
+    (async () => {
+      const imgs = document.querySelectorAll<HTMLImageElement>('.post-body img');
+      if (imgs.length === 0) return;
+      const { default: mediumZoom } = await import('medium-zoom');
+      mediumZoom(imgs, {
+        margin: 24,
+        background: 'var(--bg)',
+        scrollOffset: 80,
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
@@ -117,14 +95,15 @@ function fmtDate(date: Date): string {
     padding: 2.5rem 0 3.5rem;
   }
 
-  /* Narrow screens: single column, no TOC. */
+  /* Narrow screens: single column, no TOC sidebar. */
   .post-layout {
     max-width: var(--w-wide);
     margin-inline: auto;
     padding-inline: var(--pad-x);
   }
 
-  /* --- Three-column grid for full-body prose (breakout support) --- */
+  /* Three-column grid so WideFigure / full-bleed children can break out
+     of the 680px prose column without negative-margin hacks. */
   .post-body {
     display: grid;
     grid-template-columns:
@@ -146,7 +125,6 @@ function fmtDate(date: Date): string {
     grid-column: full;
   }
 
-  /* Header (title + meta) stays in prose column too. */
   .post-head,
   .post-foot {
     max-width: var(--w-prose);
@@ -166,30 +144,7 @@ function fmtDate(date: Date): string {
     letter-spacing: -0.01em;
     color: var(--text);
   }
-  .post-meta {
-    font-family: var(--font-ui);
-    font-size: var(--fs-meta);
-    color: var(--text-muted);
-    margin: 0;
-    line-height: 1.6;
-  }
-  .post-meta .sep {
-    margin: 0 0.45em;
-    color: var(--text-faint);
-  }
-  .post-meta-tags {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 0 0.6em;
-  }
-  .post-meta-tag {
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-  .post-meta-tag::before { content: '#'; color: var(--text-faint); margin-right: 1px; }
-  .post-meta-tag:hover { color: var(--text); }
 
-  /* Foot */
   .post-foot {
     margin-top: 3.5rem;
   }
@@ -201,22 +156,9 @@ function fmtDate(date: Date): string {
   }
   .post-tags {
     margin: 0 0 1em;
-    line-height: 1.8;
-  }
-  .post-tag {
-    display: inline-block;
-    font-family: var(--font-ui);
-    font-size: var(--fs-tag);
-    padding: 2px 8px;
-    margin-right: 6px;
-    background: var(--border-faint);
-    color: var(--text-muted);
-    border-radius: var(--r-tag);
-    text-decoration: none;
-  }
-  .post-tag:hover {
-    color: var(--text);
-    background: var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
   .post-author {
     font-family: var(--font-ui);
@@ -257,7 +199,6 @@ function fmtDate(date: Date): string {
     text-align: right;
   }
 
-  /* --- Desktop (≥1100px): TOC sidebar appears. --- */
   @media (min-width: 1100px) {
     .post-layout[data-has-toc='true'] {
       display: grid;
@@ -277,31 +218,6 @@ function fmtDate(date: Date): string {
   @media (max-width: 1099px) {
     .post-toc-slot { display: none; }
   }
-
-  /* TOC fallback (used before Stage 5's component replaces it) */
-  .toc-fallback__label {
-    font-family: var(--font-ui);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    margin: 0 0 0.8em;
-  }
-  .toc-fallback__list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-family: var(--font-ui);
-    font-size: 12px;
-    line-height: 1.6;
-  }
-  .toc-fallback__list li { margin: 0.35em 0; }
-  .toc-fallback__list li[data-depth='3'] { padding-left: 1em; }
-  .toc-fallback__list a {
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-  .toc-fallback__list a:hover { color: var(--text); }
 
   @media (max-width: 640px) {
     .post { padding: 1.5rem 0 2rem; }
