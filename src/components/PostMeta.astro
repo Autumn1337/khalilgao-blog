@@ -63,4 +63,20 @@ const { pubDate, updatedDate, tags } = post.data;
     text-decoration: none;
   }
   .post-meta__tag:hover { color: var(--text); }
+
+  /* Narrow viewports: hoist the tag list onto its own row below
+     date / reading-time / updated-date. Without this, the meta wraps
+     3–4 times on a 360px screen and reads as a blob. Also drop the
+     "·" separator immediately preceding the tags block since the
+     line break already provides that visual break. */
+  @media (max-width: 640px) {
+    .post-meta__tags {
+      display: flex;
+      margin-top: 0.4em;
+      gap: 0 0.5em;
+    }
+    .post-meta .sep:has(+ .post-meta__tags) {
+      display: none;
+    }
+  }
 </style>
