@@ -1,0 +1,49 @@
+# deploy/github-actions-deploy.yml
+#
+# Reference workflow — when you're ready to wire up deployment, copy to:
+#   .github/workflows/deploy.yml
+# and set the three repo secrets listed below.
+#
+# Required GitHub Secrets (Settings → Secrets → Actions):
+#   DEPLOY_HOST     server IP or hostname
+#   DEPLOY_USER     deploy
+#   DEPLOY_SSH_KEY  full private key text (corresponding pubkey in
+#                   ~deploy/.ssh/authorized_keys on the server)
+#
+# The rsync step uses burnett01/rsync-deployments — a thin wrapper
+# that handles SSH key injection and rsync flags. `--delete` mirrors
+# so old builds don't linger in /var/www/khalilgao.com.
+
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude='.git/' --exclude='.DS_Store'
+          path: dist/
+          remote_path: /var/www/khalilgao.com/
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
