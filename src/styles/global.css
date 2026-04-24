@@ -17,6 +17,11 @@ html {
   /* smooth scroll for TOC anchor clicks (§6.4) */
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
+  /* Always reserve scrollbar space. Prevents a 15–17px content-area
+     jump when the scrollbar appears/disappears across route changes
+     or theme toggles — noticeable as a page-margin mismatch between
+     light and dark screenshots. */
+  scrollbar-gutter: stable;
 }
 
 html,
